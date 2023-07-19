@@ -132,7 +132,7 @@ func main() {
 	})
 
 	// Run the app
-	logger.Info("Application version 0 started")
+	logger.Info("Application version 1 started")
 	router.Run(":8080")
 
 }
