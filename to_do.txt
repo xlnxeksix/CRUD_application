@@ -1,4 +1,7 @@
-1) Use packages and interfaces 
-2) Add additional controls
-3) add another model similar to user with many to many relation
-4) Working on git
+1) Use packages (Handlers are defined in another package, models are also) (for database use packages also)
+1.5) Use interfaces
+2) Working on git (Introduction done, understood and usable to some degree)
+3) Add additional controls
+4) Add another model similar to user with many-to-many relation
+5) Integrate zap logger again
+

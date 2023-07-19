@@ -1,54 +1,50 @@
 package main
 
-/*
 import (
-	"fmt"
+	"awesomeProject1/api"
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func createUser(db *gorm.DB, id int, userName string, email string, role string) {
-	user := User{id: id, userName: userName, email: email, role: role}
-	db.Create(&user)
-}
-func getUsers(db *gorm.DB) []User {
-	var users []User
-	db.Find(&users)
-	return users
-}
 func main() {
-	// Connect to the PostgreSQL database
+	// Connect to the database
 	dsn := "host=localhost user=postgres password=docker dbname=user_database port=5432 sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("Failed to connect to database")
+		panic("Unable to connect to the database")
 	}
 
-	// Auto migrate the model
-	err = db.AutoMigrate(&User{})
+	//Create table automatically
+	err = db.AutoMigrate(&models.User{})
 	if err != nil {
-		panic("Failed to auto migrate")
+		panic("There is an error when creating table")
 	}
 
-	// Start the CRUD operations
-	// ...
+	// Create gin-gonic router
+	router := gin.Default()
 
-	createUser(db, 0, "firstUser", "first@example.com", "founder")
-	var users []User
+	// Creating a user
+	createUserHandler := models.CreateUserHandler(db)
+	router.POST("/users", createUserHandler)
 
-	users = getUsers(db)
-	for _, v := range users {
-		fmt.Println(v.id)
-	}
-	// Retrieve users
-	//var users []User
-	//db.Find(&users)
+	//Get user by ID
+	getSpecificUserHandler := models.GetSpecificUserHandler(db)
+	router.GET("/users/:id", getSpecificUserHandler)
+
+	// Get all users
+	getAllUsersHandler := models.GetAllUsersHandler(db)
+	router.GET("/users", getAllUsersHandler)
 
 	// Update a user
-	//user.userName = "Jane Doe"
-	//db.Save(&user)
+	updateUserHandler := models.UpdateUserHandler(db)
+	router.PUT("/users/:id", updateUserHandler)
 
 	// Delete a user
-	//db.Delete(&user)
+	deleteUserHandler := models.DeleteUserHandler(db)
+	router.DELETE("/users/:id", deleteUserHandler)
+
+	// Run the app
+	router.Run(":8080")
+
 }
-*/
