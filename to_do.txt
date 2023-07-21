@@ -1,7 +1,5 @@
-1) Use packages (Handlers are defined in another package, models are also) (for database use packages also)
-1.5) Use interfaces
-2) Working on git (Introduction done, understood and usable to some degree)
-3) Add additional controls
-4) Add another model similar to user with many-to-many relation
-5) Integrate zap logger again
-
+1) Add another struct similar to user use many-to-many relation
+2) MVC Pattern will be applied to the existing project
+3) Raw SQL Queries will be used with ORM lib
+4) Add unit testing
+5) Tests will be included with 80% of coverage

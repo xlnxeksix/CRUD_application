@@ -1,6 +1,0 @@
-{"level":"info","ts":"2023-07-17T15:11:50.014+0300","caller":"awesomeProject1/first_project.go:58","msg":"Log message"}
-{"level":"info","ts":"2023-07-17T15:12:14.846+0300","caller":"awesomeProject1/first_project.go:76","msg":"User created","user":{"ID":3,"Username":"third_to_test_logger","Email":"thrid_user@example.com","Role":"user"}}
-{"level":"info","ts":"2023-07-17T15:13:34.358+0300","caller":"awesomeProject1/first_project.go:58","msg":"Log message"}
-{"level":"info","ts":"2023-07-17T15:13:34.358+0300","caller":"awesomeProject1/first_project.go:138","msg":"Application started"}
-{"level":"info","ts":"2023-07-19T12:13:31.144+0300","caller":"CRUD APP/main.go:129","msg":"Application version 1 started"}
-{"level":"info","ts":"2023-07-19T12:18:08.204+0300","caller":"CRUD APP/main.go:79","msg":"All users are returned"}

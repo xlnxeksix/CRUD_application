@@ -16,18 +16,23 @@ func main() {
 	}
 
 	//Create table automatically
-	err = db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.User{})
+
 	if err != nil {
 		panic("There is an error when creating table")
 	}
 
 	// Create gin-gonic router
 	router := gin.Default()
+	//Create Logger defined in logger.go
+	models.InitLogger()
+	models.CloseLogger()
 
 	// Creating a user
 	createUserHandler := models.CreateUserHandler(db)
 	router.POST("/users", createUserHandler)
 
+	//Creating an address
 	//Get user by ID
 	getSpecificUserHandler := models.GetSpecificUserHandler(db)
 	router.GET("/users/:id", getSpecificUserHandler)
@@ -45,6 +50,7 @@ func main() {
 	router.DELETE("/users/:id", deleteUserHandler)
 
 	// Run the app
+	models.Logger.Info("Application started succesfully")
 	router.Run(":8080")
 
 }
