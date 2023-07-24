@@ -1,7 +1,9 @@
 package main
 
 import (
-	"awesomeProject1/api"
+	"awesomeProject1/controllers"
+	"awesomeProject1/models"
+	"awesomeProject1/routers"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -16,7 +18,7 @@ func main() {
 	}
 
 	//Create table automatically
-	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.User{}, &models.Product{})
 
 	if err != nil {
 		panic("There is an error when creating table")
@@ -24,31 +26,15 @@ func main() {
 
 	// Create gin-gonic router
 	router := gin.Default()
+
 	//Create Logger defined in logger.go
 	models.InitLogger()
 	models.CloseLogger()
 
-	// Creating a user
-	createUserHandler := models.CreateUserHandler(db)
-	router.POST("/users", createUserHandler)
+	userController := controllers.NewUserController(db)
+	productController := controllers.NewProductController(db)
 
-	//Creating an address
-	//Get user by ID
-	getSpecificUserHandler := models.GetSpecificUserHandler(db)
-	router.GET("/users/:id", getSpecificUserHandler)
-
-	// Get all users
-	getAllUsersHandler := models.GetAllUsersHandler(db)
-	router.GET("/users", getAllUsersHandler)
-
-	// Update a user
-	updateUserHandler := models.UpdateUserHandler(db)
-	router.PUT("/users/:id", updateUserHandler)
-
-	// Delete a user
-	deleteUserHandler := models.DeleteUserHandler(db)
-	router.DELETE("/users/:id", deleteUserHandler)
-
+	routers.SetupRoutes(router, userController, productController)
 	// Run the app
 	models.Logger.Info("Application started succesfully")
 	router.Run(":8080")
