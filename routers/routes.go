@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, userController *controllers.UserController, productController *controllers.ProductController) {
+func SetupRoutes(r *gin.Engine, userController *controllers.UserController, productController *controllers.ProductController, userProductController *controllers.UserProductController) {
 	users := r.Group("/users")
 	{
 		users.POST("/", userController.CreateUserHandler)
@@ -13,6 +13,7 @@ func SetupRoutes(r *gin.Engine, userController *controllers.UserController, prod
 		users.GET("/", userController.GetAllUsersHandler)
 		users.PUT("/:id", userController.UpdateUserHandler)
 		users.DELETE("/:id", userController.DeleteUserHandler)
+		users.GET("/get_first_user", userController.GetUsersWithUsername)
 	}
 
 	products := r.Group("/products")
@@ -22,5 +23,10 @@ func SetupRoutes(r *gin.Engine, userController *controllers.UserController, prod
 		products.GET("/", productController.GetAllproductsHandler)
 		products.PUT("/:id", productController.UpdateproductHandler)
 		products.DELETE("/:id", productController.DeleteproductHandler)
+	}
+
+	userproducts := r.Group("/userProducts")
+	{
+		userproducts.POST("/", userProductController.CreateUserProductHandler)
 	}
 }

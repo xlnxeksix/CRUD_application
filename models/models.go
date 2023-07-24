@@ -20,5 +20,5 @@ type Product struct {
 type UserProduct struct {
 	gorm.Model
 	UserID    uint
-	AddressID uint
+	ProductID uint
 }

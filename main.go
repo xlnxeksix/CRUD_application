@@ -18,7 +18,7 @@ func main() {
 	}
 
 	//Create table automatically
-	db.AutoMigrate(&models.User{}, &models.Product{})
+	db.AutoMigrate(&models.User{}, &models.Product{}, &models.UserProduct{})
 
 	if err != nil {
 		panic("There is an error when creating table")
@@ -33,8 +33,9 @@ func main() {
 
 	userController := controllers.NewUserController(db)
 	productController := controllers.NewProductController(db)
+	userProductController := controllers.NewUserProductController(db)
 
-	routers.SetupRoutes(router, userController, productController)
+	routers.SetupRoutes(router, userController, productController, userProductController)
 	// Run the app
 	models.Logger.Info("Application started succesfully")
 	router.Run(":8080")
