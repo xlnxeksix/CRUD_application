@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"awesomeProject1/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 )
 
 type UserController struct {
@@ -16,29 +18,44 @@ func NewUserController(db *gorm.DB) *UserController {
 	return &UserController{DB: db}
 }
 
+// CreateUserHandler handles creating a new user
 func (ctrl *UserController) CreateUserHandler(c *gin.Context) {
 	var user models.User
+
 	if err := c.ShouldBindJSON(&user); err != nil {
 		models.Logger.Error("Error binding JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result := ctrl.DB.Create(&user)
-	if result.Error != nil {
-		models.Logger.Error("Error creating user", zap.Error(result.Error))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+
+	insertQuery := fmt.Sprintf("INSERT INTO users (id, username, email, role) VALUES (%d, '%s', '%s', '%s')",
+		user.ID, user.Username, user.Email, user.Role)
+
+	if err := ctrl.DB.Exec(insertQuery).Error; err != nil {
+		models.Logger.Error("Error creating user", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}
+
 	models.Logger.Info("User created successfully")
 	c.JSON(http.StatusCreated, user)
 }
 
 func (ctrl *UserController) DeleteUserHandler(c *gin.Context) {
-	var user models.User
-	result := ctrl.DB.Delete(&user, c.Param("id"))
-	if result.Error != nil {
-		models.Logger.Error("Error deleting user", zap.Error(result.Error))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	idParam := c.Param("id")
+	userID, err := strconv.ParseUint(idParam, 10, 64)
+	if err != nil {
+		models.Logger.Error("Invalid ID provided", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID provided"})
+		return
+	}
+
+	// Convert the userID to a string before using it in the SQL query
+	deleteQuery := fmt.Sprintf("DELETE FROM users WHERE id = '%d'", userID)
+
+	if err := ctrl.DB.Exec(deleteQuery).Error; err != nil {
+		models.Logger.Error("Error deleting user", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
 		return
 	}
 
@@ -48,7 +65,12 @@ func (ctrl *UserController) DeleteUserHandler(c *gin.Context) {
 
 func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
 	var user models.User
-	if err := ctrl.DB.First(&user, c.Param("id")).Error; err != nil {
+	idParam := c.Param("id")
+	userID, _ := strconv.ParseUint(idParam, 10, 64)
+	query := fmt.Sprintf("SELECT * FROM users WHERE id = '%d' FOR UPDATE", userID)
+
+	row := ctrl.DB.Raw(query).Row()
+	if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Role); err != nil {
 		models.Logger.Error("Error finding user", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -60,12 +82,16 @@ func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
-	result := ctrl.DB.Save(&user)
-	if result.Error != nil {
-		models.Logger.Error("Error updating user", zap.Error(result.Error))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	updateQuery := fmt.Sprintf("UPDATE users SET ID = %d, username = '%s', email = '%s', role = '%s' WHERE id = '%d'",
+		user.ID, user.Username, user.Email, user.Role, userID)
+	ctrl.DB.Exec(updateQuery)
+
+	/*if err, _ :=  err != nil {
+		models.Logger.Error("Error updating user")
+		models.Logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
 		return
-	}
+	}*/
 
 	models.Logger.Info("User updated successfully")
 	c.JSON(http.StatusOK, user)
@@ -74,40 +100,54 @@ func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
 // GetAllUsersHandler handles getting all users
 func (ctrl *UserController) GetAllUsersHandler(c *gin.Context) {
 	var users []models.User
-	result := ctrl.DB.Find(&users)
-	if result.Error != nil {
-		models.Logger.Error("Error getting all users", zap.Error(result.Error))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+
+	query := "SELECT * FROM users"
+
+	rows, err := ctrl.DB.Raw(query).Rows()
+	if err != nil {
+		models.Logger.Error("Error getting all users", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
 		return
 	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role); err != nil {
+			models.Logger.Error("Error scanning user row", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
+			return
+		}
+		users = append(users, user)
+	}
+
 	c.JSON(http.StatusOK, users)
 }
 
 // GetSpecificUserHandler handles getting a specific user
 func (ctrl *UserController) GetSpecificUserHandler(c *gin.Context) {
 	var user models.User
-	result := ctrl.DB.First(&user, c.Param("id"))
-	if result.Error != nil {
-		models.Logger.Error("User not found", zap.Error(result.Error))
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	idParam := c.Param("id")
+	userID, err := strconv.ParseUint(idParam, 10, 64)
+	query := fmt.Sprintf("SELECT * FROM users WHERE id = '%d'", userID)
+
+	rows, err := ctrl.DB.Raw(query).Rows()
+	if err != nil {
+		models.Logger.Error("Error finding user", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 		return
 	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role)
+		if err != nil {
+			models.Logger.Error("Error scanning user row", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
+			return
+		}
+		break // Assuming that there will be only one row since ID is unique
+	}
+
 	c.JSON(http.StatusOK, user)
-}
-
-func (ctrl *UserController) GetUsersWithUsername(c *gin.Context) {
-	var users []models.User
-
-	// SQL query to fetch users who have the product "pen"
-	query := `SELECT u.ID, u.Username, u.Email
-			  FROM users u
-			  WHERE u.Username = 'first_user'`
-
-	// Execute the raw SQL query and scan the results into the users slice
-	if err := ctrl.DB.Raw(query).Scan(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
-		return
-	}
-
-	c.JSON(http.StatusOK, users)
 }

@@ -1,16 +1,13 @@
 package models
 
-import "gorm.io/gorm"
-
 type User struct {
-	gorm.Model
 	ID       uint   `gorm:"primaryKey"`
 	Username string `gorm:"unique"`
 	Email    string
+	Role     string
 }
 
 type Product struct {
-	gorm.Model
 	ID       uint `gorm:"primaryKey"`
 	Type     string
 	Quantity uint
@@ -18,7 +15,7 @@ type Product struct {
 }
 
 type UserProduct struct {
-	gorm.Model
+	ID        uint `gorm:"primaryKey"`
 	UserID    uint
 	ProductID uint
 }

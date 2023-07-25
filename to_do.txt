@@ -1,2 +1,4 @@
-1) Add unit testing
-2) Tests will be included with 80% of coverage
+1) Work on logger
+2) Add logic
+3) Add unit testing
+4) Tests will be included with 80% of coverage
