@@ -1,5 +1,3 @@
-1) Add another struct similar to user use many-to-many relation
-2) MVC Pattern will be applied to the existing project (MVC format is done)
-3) Raw SQL Queries will be used with ORM lib
-4) Add unit testing
-5) Tests will be included with 80% of coverage
+1) Many to many relation will be handled by gorm
+2) Add unit testing
+3) Tests will be included with 80% of coverage
