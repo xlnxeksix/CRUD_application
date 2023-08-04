@@ -29,7 +29,7 @@ func SetupRoutes(r *gin.Engine, userController *controllers.UserController, prod
 		userproducts.POST("/", userProductController.CreateUserProductHandler)
 		userproducts.GET("/:id", userProductController.GetSpecificUserProductHandler)
 		userproducts.GET("/", userProductController.GetAllUserProductsHandler)
-		userproducts.PUT("/:id", userProductController.UpdateUserProductHandler)
+		//userproducts.PUT("/:id", userProductController.UpdateUserProductHandler)
 		userproducts.DELETE("/:id", userProductController.DeleteUserProductHandler)
 	}
 }

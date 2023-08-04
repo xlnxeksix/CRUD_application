@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"awesomeProject1/models"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -28,10 +27,9 @@ func (ctrl *UserController) CreateUserHandler(c *gin.Context) {
 		return
 	}
 
-	insertQuery := fmt.Sprintf("INSERT INTO users (id, username, email, role) VALUES (%d, '%s', '%s', '%s')",
-		user.ID, user.Username, user.Email, user.Role)
+	insertQuery := "INSERT INTO users (id, username, email, role) VALUES (?, ?, ?, ?)"
 
-	if err := ctrl.DB.Exec(insertQuery).Error; err != nil {
+	if err := ctrl.DB.Exec(insertQuery, user.ID, user.Username, user.Email, user.Role).Error; err != nil {
 		models.Logger.Error("Error creating user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
@@ -42,18 +40,30 @@ func (ctrl *UserController) CreateUserHandler(c *gin.Context) {
 }
 
 func (ctrl *UserController) DeleteUserHandler(c *gin.Context) {
-	idParam := c.Param("id")
-	userID, err := strconv.ParseUint(idParam, 10, 64)
+	// Check if the user exists before attempting to delete
+	idStr := c.Param("id")
+	_, err := strconv.Atoi(idStr)
 	if err != nil {
-		models.Logger.Error("Invalid ID provided", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID provided"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	// Convert the userID to a string before using it in the SQL query
-	deleteQuery := fmt.Sprintf("DELETE FROM users WHERE id = '%d'", userID)
+	var count int64
+	err = ctrl.DB.Model(&models.User{}).Where("id = ?", c.Param("id")).Count(&count).Error
+	if err != nil {
+		models.Logger.Error("Error checking if user exists", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to check user existence"})
+		return
+	}
+	if count == 0 {
+		// User not found, return an error
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
 
-	if err := ctrl.DB.Exec(deleteQuery).Error; err != nil {
+	deleteQuery := "DELETE FROM users WHERE id = ?"
+	err = ctrl.DB.Exec(deleteQuery, c.Param("id")).Error
+	if err != nil {
 		models.Logger.Error("Error deleting user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
 		return
@@ -65,11 +75,16 @@ func (ctrl *UserController) DeleteUserHandler(c *gin.Context) {
 
 func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
 	var user models.User
-	idParam := c.Param("id")
-	userID, _ := strconv.ParseUint(idParam, 10, 64)
-	query := fmt.Sprintf("SELECT * FROM users WHERE id = '%d' FOR UPDATE", userID)
 
-	row := ctrl.DB.Raw(query).Row()
+	query := "SELECT * FROM users WHERE id = ?"
+	err := ctrl.DB.Exec(query, c.Param("id")).Error
+	if err != nil {
+		models.Logger.Error("Error updating user", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
+		return
+	}
+	row := ctrl.DB.Raw(query, c.Param("id")).Row()
+
 	if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Role); err != nil {
 		models.Logger.Error("Error finding user", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -82,16 +97,14 @@ func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
-	updateQuery := fmt.Sprintf("UPDATE users SET ID = %d, username = '%s', email = '%s', role = '%s' WHERE id = '%d'",
-		user.ID, user.Username, user.Email, user.Role, userID)
-	ctrl.DB.Exec(updateQuery)
+	updateQuery := "UPDATE users SET ID = ?, username = ?, email = ?, role = ? WHERE id = ?"
+	err = ctrl.DB.Exec(updateQuery, user.ID, user.Username, user.Email, user.Role, c.Param("id")).Error
 
-	/*if err, _ :=  err != nil {
+	if err != nil {
 		models.Logger.Error("Error updating user")
-		models.Logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
 		return
-	}*/
+	}
 
 	models.Logger.Info("User updated successfully")
 	c.JSON(http.StatusOK, user)
@@ -125,19 +138,19 @@ func (ctrl *UserController) GetAllUsersHandler(c *gin.Context) {
 }
 
 // GetSpecificUserHandler handles getting a specific user
+
 func (ctrl *UserController) GetSpecificUserHandler(c *gin.Context) {
 	var user models.User
-	idParam := c.Param("id")
-	userID, err := strconv.ParseUint(idParam, 10, 64)
-	query := fmt.Sprintf("SELECT * FROM users WHERE id = '%d'", userID)
-
-	rows, err := ctrl.DB.Raw(query).Rows()
+	query := "SELECT * FROM users WHERE id = ?"
+	rows, err := ctrl.DB.Raw(query, c.Param("id")).Rows()
 	if err != nil {
 		models.Logger.Error("Error finding user", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID must be an integer"})
 		return
 	}
 	defer rows.Close()
+
+	found := false // Variable to keep track if the user was found or not
 
 	for rows.Next() {
 		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role)
@@ -146,7 +159,13 @@ func (ctrl *UserController) GetSpecificUserHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 			return
 		}
-		break // Assuming that there will be only one row since ID is unique
+		found = true // User found, set the flag to true
+		break        // Assuming that there will be only one row since ID is unique
+	}
+
+	if !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
 	}
 
 	c.JSON(http.StatusOK, user)

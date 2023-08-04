@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"awesomeProject1/models"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -27,80 +26,86 @@ func (ctrl *UserProductController) CreateUserProductHandler(c *gin.Context) {
 		return
 	}
 
-	query := fmt.Sprintf("INSERT INTO user_products (id, user_id, product_id) VALUES (%d, %d, %d)", userProduct.ID, userProduct.UserID, userProduct.ProductID)
+	query := "INSERT INTO user_products (id, user_id, product_id) VALUES (?, ?, ?)"
 
-	row := ctrl.DB.Raw(query).Row()
-	row.Scan(&userProduct.ID)
-	/*
-		if err :=  err != nil {
-			models.Logger.Error("Error creating user-product association", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user-product association"})
-			return
-		}
-	*/
+	if err := ctrl.DB.Exec(query, userProduct.ID, userProduct.UserID, userProduct.ProductID).Error; err != nil {
+		models.Logger.Error("Error creating user-product association", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user-product association"})
+		return
+	}
+
 	models.Logger.Info("User-product association created successfully")
 	c.JSON(http.StatusCreated, userProduct)
 }
 
 // DeleteUserProductHandler handles deleting a specific user-product association
 func (ctrl *UserProductController) DeleteUserProductHandler(c *gin.Context) {
-	idParam := c.Param("id")
-	userProductID, err := strconv.ParseUint(idParam, 10, 64)
+	idStr := c.Param("id")
+	_, err := strconv.Atoi(idStr)
 	if err != nil {
-		models.Logger.Error("Invalid ID provided", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID provided"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
-	query := fmt.Sprintf("DELETE FROM user_products WHERE id = '%d'", userProductID)
+	var count int64
+	err = ctrl.DB.Model(&models.User{}).Where("id = ?", c.Param("id")).Count(&count).Error
+	if err != nil {
+		models.Logger.Error("Error checking if user exists", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to check user existence"})
+		return
+	}
+	if count == 0 {
+		// User not found, return an error
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	query := "DELETE FROM user_products WHERE id = ?"
+	err = ctrl.DB.Exec(query, c.Param("id")).Error
 
-	ctrl.DB.Exec(query)
-	/*
-		if err != nil {
-			models.Logger.Error("Error deleting product")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user-product association"})
-			return
-		}
-	*/
-	models.Logger.Info("product deleted successfully")
-	c.JSON(http.StatusOK, gin.H{"message": "product is deleted"})
+	if err != nil {
+		models.Logger.Error("Error deleting association", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete user-product association"})
+		return
+	}
+
+	models.Logger.Info("user-pproduct association deleted successfully")
+	c.JSON(http.StatusOK, gin.H{"message": "user-product association is deleted"})
 }
 
 func (ctrl *UserProductController) UpdateUserProductHandler(c *gin.Context) {
-	var userProduct models.UserProduct
-	idParam := c.Param("id")
-	userProductID, err := strconv.ParseUint(idParam, 10, 64)
+	var userproduct models.UserProduct
+
+	query := "SELECT * FROM user_products WHERE id = ?"
+	err := ctrl.DB.Exec(query, c.Param("id")).Error
 	if err != nil {
-		models.Logger.Error("Invalid ID provided", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID provided"})
+		models.Logger.Error("Error updating user-product associations", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user-product associations"})
 		return
 	}
-	query := fmt.Sprintf("SELECT * FROM user_products WHERE id = '%d' FOR UPDATE", userProductID)
+	row := ctrl.DB.Raw(query, c.Param("id")).Row()
 
-	row := ctrl.DB.Raw(query).Row()
-	if err := row.Scan(&userProduct.ID, &userProduct.UserID, &userProduct.ProductID); err != nil {
-		models.Logger.Error("user-product association not found", zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{"error": "user-product association not found"})
+	if err := row.Scan(&userproduct.ID, userproduct.UserID, userproduct.ProductID); err != nil {
+		models.Logger.Error("Error finding user-product associations", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": "user-product associations not found"})
 		return
 	}
 
-	if err := c.ShouldBindJSON(&userProduct); err != nil {
+	if err := c.ShouldBindJSON(&userproduct); err != nil {
 		models.Logger.Error("Error binding JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	updateQuery := fmt.Sprintf("UPDATE user_products SET id = '%d', user_id = %d, product_id = %d WHERE id = '%d'",
-		userProduct.ID, userProduct.UserID, userProduct.ProductID, userProductID)
-	ctrl.DB.Exec(updateQuery)
-	/*
-		if err := ; err != nil {
-			models.Logger.Error("Error updating product")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user-product association"})
-			return
-		}
-	*/
-	models.Logger.Info("product updated successfully")
-	c.JSON(http.StatusOK, userProduct)
+	updateQuery := "UPDATE user_products SET ID = ?, userID = ?, productID = ? WHERE id = ?"
+	err = ctrl.DB.Exec(updateQuery, userproduct.ID, userproduct.UserID, userproduct.ProductID, c.Param("id")).Error
+
+	if err != nil {
+		models.Logger.Error("Error updating user-product associations")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user-product associations"})
+		return
+	}
+
+	models.Logger.Info("user-product associations updated successfully")
+	c.JSON(http.StatusOK, userproduct)
 }
 
 // GetAllproductsHandler handles getting all products
@@ -111,46 +116,56 @@ func (ctrl *UserProductController) GetAllUserProductsHandler(c *gin.Context) {
 
 	rows, err := ctrl.DB.Raw(query).Rows()
 	if err != nil {
-		models.Logger.Error("Error getting all products", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get products"})
+		models.Logger.Error("Error getting all user-product associations", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user-product associations"})
 		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var user_product models.UserProduct
-		rows.Scan(&user_product.ID, &user_product.UserID, &user_product.ProductID)
-		/*
-			if err := ; err != nil {
-				models.Logger.Error("Error scanning product row", zap.Error(err))
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get products"})
-				return
-			}*/
-		user_products = append(user_products, user_product)
-	}
 
-	c.JSON(http.StatusOK, user_products)
+		if err := rows.Scan(&user_product.ID, &user_product.UserID, &user_product.ProductID); err != nil {
+			models.Logger.Error("Error scanning user-product row", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user-products"})
+			return
+
+			user_products = append(user_products, user_product)
+		}
+
+		c.JSON(http.StatusOK, user_products)
+	}
 }
 
 // Get Specific product Handler handles getting a specific product
 func (ctrl *UserProductController) GetSpecificUserProductHandler(c *gin.Context) {
-	var userProduct models.UserProduct
-	idParam := c.Param("id")
-	userproductID, err := strconv.ParseUint(idParam, 10, 64)
+	var userproduct models.UserProduct
+	query := "SELECT * FROM user_products WHERE id = ?"
+	rows, err := ctrl.DB.Raw(query, c.Param("id")).Rows()
 	if err != nil {
-		models.Logger.Error("Invalid ID provided", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID provided"})
+		models.Logger.Error("Error finding user-product", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User-product ID must be an integer"})
 		return
 	}
-	query := fmt.Sprintf("SELECT * FROM user_products WHERE id = '%d'", userproductID)
+	defer rows.Close()
 
-	row := ctrl.DB.Raw(query).Row()
-	row.Scan(&userProduct.ID, &userProduct.UserID, &userProduct.ProductID)
-	/*
-		if err := ; err != nil {
-			models.Logger.Error("user-product association not found", zap.Error(err))
-			c.JSON(http.StatusNotFound, gin.H{"error": "user-product association not found"})
+	found := false // Variable to keep track if the user was found or not
+
+	for rows.Next() {
+		err := rows.Scan(&userproduct.ID, &userproduct.UserID, &userproduct.ProductID)
+		if err != nil {
+			models.Logger.Error("Error scanning user-product row", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user-product"})
 			return
-		}*/
-	c.JSON(http.StatusOK, userProduct)
+		}
+		found = true // User found, set the flag to true
+		break        // Assuming that there will be only one row since ID is unique
+	}
+
+	if !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User-product not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, userproduct)
 }
