@@ -168,5 +168,7 @@ func (ctrl *UserController) GetSpecificUserHandler(c *gin.Context) {
 		return
 	}
 
+	// Preload the allocated products for the user
+	ctrl.DB.Model(&user).Preload("Products").Find(&user)
 	c.JSON(http.StatusOK, user)
 }

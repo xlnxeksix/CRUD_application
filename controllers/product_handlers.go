@@ -31,7 +31,7 @@ func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
 
 	if err := ctrl.DB.Exec(insertQuery, product.ID, product.Name, product.Type, product.Quantity).Error; err != nil {
 		models.Logger.Error("Error creating user", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create product"})
 		return
 	}
 
@@ -49,24 +49,24 @@ func (ctrl *ProductController) DeleteProductHandler(c *gin.Context) {
 	var count int64
 	err = ctrl.DB.Model(&models.User{}).Where("id = ?", c.Param("id")).Count(&count).Error
 	if err != nil {
-		models.Logger.Error("Error checking if user exists", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to check user existence"})
+		models.Logger.Error("Error checking if product exists", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to check product existence"})
 		return
 	}
 	if count == 0 {
 		// User not found, return an error
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 	deleteQuery := "DELETE FROM products WHERE id = ?"
 	err = ctrl.DB.Exec(deleteQuery, c.Param("id")).Error
 	if err != nil {
-		models.Logger.Error("Error deleting user", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed ti delete products"})
+		models.Logger.Error("Error deleting product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete products"})
 		return
 	}
 
-	models.Logger.Info("product deleted successfully")
+	models.Logger.Info("Product deleted successfully")
 	c.JSON(http.StatusOK, gin.H{"message": "Product is deleted"})
 
 }
@@ -80,7 +80,7 @@ func (ctrl *ProductController) UpdateProductHandler(c *gin.Context) {
 
 	if err != nil {
 		models.Logger.Error("Error updating product", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update user"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update product"})
 		return
 	}
 
@@ -127,7 +127,7 @@ func (ctrl *ProductController) GetAllProductsHandler(c *gin.Context) {
 
 	for rows.Next() {
 		var product models.Product
-		if err := rows.Scan(&product.ID, &product.Type, &product.Quantity, &product.Name); err != nil {
+		if err := rows.Scan(&product.ID, &product.Name, &product.Type, &product.Quantity); err != nil {
 			models.Logger.Error("Error scanning product row", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get products"})
 			return
@@ -159,14 +159,15 @@ func (ctrl *ProductController) GetSpecificproductHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get product"})
 			return
 		}
-		found = true // User found, set the flag to true
+		found = true // Product found, set the flag to true
 		break        // Assuming that there will be only one row since ID is unique
 	}
 
 	if !found {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
+	ctrl.DB.Model(&product).Preload("Users").Find(&product)
 
 	c.JSON(http.StatusOK, product)
 }

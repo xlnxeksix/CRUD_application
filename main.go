@@ -18,7 +18,7 @@ func main() {
 	}
 
 	//Create table automatically
-	db.AutoMigrate(&models.User{}, &models.Product{}, &models.UserProduct{})
+	db.AutoMigrate(&models.User{}, &models.Product{})
 
 	if err != nil {
 		panic("There is an error when creating table")
