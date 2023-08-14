@@ -30,10 +30,20 @@ func main() {
 	//Create Logger defined in logger.go
 	models.InitLogger()
 	models.CloseLogger()
+	userRepo := &controllers.SQLUserRepository{DB: db}
+	userController := controllers.NewUserController(userRepo)
 
-	userController := controllers.NewUserController(db)
-	productController := controllers.NewProductController(db)
-	userProductController := controllers.NewUserProductController(db)
+	productRepo := &controllers.SQLProductRepository{DB: db}
+	productController := controllers.NewProductController(productRepo)
+
+	userProductRepo := &controllers.SQLUserProductRepository{
+		DB:          db,
+		UserRepo:    userRepo,
+		ProductRepo: productRepo,
+	}
+
+	// Create an instance of user-product controller using the repository
+	userProductController := controllers.NewUserProductController(userRepo, productRepo, userProductRepo)
 
 	routers.SetupRoutes(router, userController, productController, userProductController)
 	// Run the app

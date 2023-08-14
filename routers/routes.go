@@ -18,7 +18,7 @@ func SetupRoutes(r *gin.Engine, userController *controllers.UserController, prod
 	products := r.Group("/products")
 	{
 		products.POST("/", productController.CreateProductHandler)
-		products.GET("/:id", productController.GetSpecificproductHandler)
+		products.GET("/:id", productController.GetSpecificProductHandler)
 		products.GET("/", productController.GetAllProductsHandler)
 		products.PUT("/:id", productController.UpdateProductHandler)
 		products.DELETE("/:id", productController.DeleteProductHandler)

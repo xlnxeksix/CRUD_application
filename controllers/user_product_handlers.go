@@ -3,15 +3,20 @@ package controllers
 import (
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type UserProductController struct {
-	DB *gorm.DB
+	UserRepo     UserRepository
+	ProductRepo  ProductRepository
+	UserProdRepo UserProductRepository
 }
 
-func NewUserProductController(db *gorm.DB) *UserProductController {
-	return &UserProductController{DB: db}
+func NewUserProductController(userRepo UserRepository, productRepo ProductRepository, userProdRepo UserProductRepository) *UserProductController {
+	return &UserProductController{
+		UserRepo:     userRepo,
+		ProductRepo:  productRepo,
+		UserProdRepo: userProdRepo,
+	}
 }
 func (ctrl *UserProductController) AllocateProductToUser(c *gin.Context) {
 	var requestBody struct {
@@ -24,14 +29,13 @@ func (ctrl *UserProductController) AllocateProductToUser(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := ctrl.DB.First(&user, requestBody.UserID).Error; err != nil {
+	var user *models.User
+	user, usererr := ctrl.UserRepo.GetUserByID(requestBody.UserID)
+	if usererr != nil {
 		c.JSON(404, gin.H{"error": "User not found"})
 		return
 	}
-
-	var product models.Product
-	if err := ctrl.DB.First(&product, requestBody.ProductID).Error; err != nil {
+	if _, err := ctrl.ProductRepo.GetProductByID(requestBody.ProductID); err != nil {
 		c.JSON(404, gin.H{"error": "Product not found"})
 		return
 	}
@@ -45,10 +49,10 @@ func (ctrl *UserProductController) AllocateProductToUser(c *gin.Context) {
 	}
 
 	// Allocate the product to the user
-	user.Products = append(user.Products, &product)
-	product.Users = append(product.Users, &user)
-	ctrl.DB.Save(&user)
-	ctrl.DB.Save(&product)
+	if err := ctrl.UserProdRepo.AllocateProduct(requestBody.UserID, requestBody.ProductID); err != nil {
+		c.JSON(500, gin.H{"error": "Internal error allocating product"})
+		return
+	}
 
 	c.JSON(200, gin.H{"message": "Product allocated to the user"})
 }
@@ -64,9 +68,15 @@ func (ctrl *UserProductController) DeallocateProductFromUser(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := ctrl.DB.Preload("Products").First(&user, requestBody.UserID).Error; err != nil {
+	var user *models.User
+	user, usererr := ctrl.UserRepo.GetUserByID(requestBody.UserID)
+	if usererr != nil {
 		c.JSON(404, gin.H{"error": "User not found"})
+		return
+	}
+
+	if _, err := ctrl.ProductRepo.GetProductByID(requestBody.ProductID); err != nil {
+		c.JSON(404, gin.H{"error": "Product not found"})
 		return
 	}
 
@@ -85,8 +95,11 @@ func (ctrl *UserProductController) DeallocateProductFromUser(c *gin.Context) {
 	}
 
 	// Remove the product from the user's allocation
-	ctrl.DB.Model(&user).Association("Products").Delete(productToRemove)
-	ctrl.DB.Model(&productToRemove).Association("Users").Delete(user)
+	// Allocate the product to the user
+	if err := ctrl.UserProdRepo.DeallocateProduct(requestBody.UserID, requestBody.ProductID); err != nil {
+		c.JSON(500, gin.H{"error": "Internal error deallocating product"})
+		return
+	}
 
 	c.JSON(200, gin.H{"message": "Product deallocated from the user"})
 }

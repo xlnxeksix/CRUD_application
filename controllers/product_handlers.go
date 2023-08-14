@@ -4,17 +4,16 @@ import (
 	"awesomeProject1/models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
 
 type ProductController struct {
-	DB *gorm.DB
+	Repo ProductRepository
 }
 
-func NewProductController(db *gorm.DB) *ProductController {
-	return &ProductController{DB: db}
+func NewProductController(repo ProductRepository) *ProductController {
+	return &ProductController{Repo: repo}
 }
 
 func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
@@ -25,13 +24,16 @@ func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	insertQuery := "INSERT INTO products (id, name, type, quantity) VALUES (?, ?, ?, ?)"
 
-	ctrl.DB.Raw(insertQuery).Row()
+	// Check if the product exists
+	if existingProduct, _ := ctrl.Repo.GetProductByID(product.ID); existingProduct != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Product with same ID exists"})
+		return
+	}
 
-	if err := ctrl.DB.Exec(insertQuery, product.ID, product.Name, product.Type, product.Quantity).Error; err != nil {
-		models.Logger.Error("Error creating user", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create product"})
+	if err := ctrl.Repo.CreateProduct(&product); err != nil {
+		models.Logger.Error("Error creating product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})
 		return
 	}
 
@@ -40,134 +42,119 @@ func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
 }
 
 func (ctrl *ProductController) DeleteProductHandler(c *gin.Context) {
-	idStr := c.Param("id")
-	_, err := strconv.Atoi(idStr)
+	productIDStr := c.Param("id")
+	productID32, err := strconv.ParseUint(productIDStr, 10, 64)
+	productID := uint(productID32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
-	var count int64
-	err = ctrl.DB.Model(&models.User{}).Where("id = ?", c.Param("id")).Count(&count).Error
+
+	// Check if the product exists
+	product, err := ctrl.Repo.GetProductByID(productID)
 	if err != nil {
-		models.Logger.Error("Error checking if product exists", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to check product existence"})
+		models.Logger.Error("Error retrieving product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve product"})
 		return
 	}
-	if count == 0 {
-		// User not found, return an error
+
+	if product == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
-	deleteQuery := "DELETE FROM products WHERE id = ?"
-	err = ctrl.DB.Exec(deleteQuery, c.Param("id")).Error
-	if err != nil {
+
+	// Delete the product
+	if err := ctrl.Repo.DeleteProduct(productID); err != nil {
 		models.Logger.Error("Error deleting product", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete products"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product"})
 		return
 	}
 
 	models.Logger.Info("Product deleted successfully")
-	c.JSON(http.StatusOK, gin.H{"message": "Product is deleted"})
-
+	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
 }
 
-// UpdateProductHandler handles updating a specific product
 func (ctrl *ProductController) UpdateProductHandler(c *gin.Context) {
-	var product models.Product
+	var updatedProduct models.Product
 
-	query := "SELECT * FROM products WHERE id = ?"
-	err := ctrl.DB.Exec(query, c.Param("id")).Error
-
+	// Check if the product exists
+	productIDStr := c.Param("id")
+	productID, err := strconv.ParseUint(productIDStr, 10, 32)
 	if err != nil {
-		models.Logger.Error("Error updating product", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update product"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	row := ctrl.DB.Raw(query, c.Param("id")).Row()
-
-	if err := row.Scan(&product.ID, &product.Name, &product.Type, &product.Quantity); err != nil {
+	// Fetch the existing product from the repository
+	existingProduct, err := ctrl.Repo.GetProductByID(uint(productID))
+	if err != nil {
 		models.Logger.Error("Error finding product", zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	if err := c.ShouldBindJSON(&product); err != nil {
+	// Bind JSON data to the updatedProduct struct
+	if err := c.ShouldBindJSON(&updatedProduct); err != nil {
 		models.Logger.Error("Error binding JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	updateQuery := "UPDATE products SET ID = ?, name = ?, type = ?, quantity = ? WHERE id = ?"
-	err = ctrl.DB.Exec(updateQuery, product.ID, product.Name, product.Type, product.Quantity, c.Param("id")).Error
+	// Update only the necessary fields
+	existingProduct.ID = updatedProduct.ID
+	existingProduct.Name = updatedProduct.Name
+	existingProduct.Type = updatedProduct.Type
+	existingProduct.Quantity = updatedProduct.Quantity
 
+	// Update the product in the repository
+	err = ctrl.Repo.UpdateProduct(existingProduct, uint(productID))
 	if err != nil {
-		models.Logger.Error("Error updating product")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update product"})
+		models.Logger.Error("Error updating product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product"})
 		return
 	}
 
 	models.Logger.Info("Product updated successfully")
-	c.JSON(http.StatusOK, product)
+	c.JSON(http.StatusOK, existingProduct)
 }
 
-// GetAllproductsHandler handles getting all products
 func (ctrl *ProductController) GetAllProductsHandler(c *gin.Context) {
 	var products []models.Product
 
-	query := "SELECT * FROM products"
-
-	rows, err := ctrl.DB.Raw(query).Rows()
+	// Fetch all products from the repository
+	allProducts, err := ctrl.Repo.GetAllProducts()
 	if err != nil {
 		models.Logger.Error("Error getting all products", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get products"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get products"})
 		return
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var product models.Product
-		if err := rows.Scan(&product.ID, &product.Name, &product.Type, &product.Quantity); err != nil {
-			models.Logger.Error("Error scanning product row", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get products"})
-			return
-		}
-		products = append(products, product)
-	}
+	products = allProducts
 
 	c.JSON(http.StatusOK, products)
 }
 
-// GetSpecificproductHandler handles getting a specific product
-func (ctrl *ProductController) GetSpecificproductHandler(c *gin.Context) {
-	var product models.Product
-	query := "SELECT * FROM products WHERE id = ?"
-	rows, err := ctrl.DB.Raw(query, c.Param("id")).Rows()
+func (ctrl *ProductController) GetSpecificProductHandler(c *gin.Context) {
+	productIDStr := c.Param("id")
+	productID32, err := strconv.ParseUint(productIDStr, 10, 64)
+	productID := uint(productID32)
 	if err != nil {
-		models.Logger.Error("Error finding product", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Product ID must be an integer"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
-	defer rows.Close()
 
-	found := false // Variable to keep track if the user was found or not
-
-	for rows.Next() {
-		err := rows.Scan(&product.ID, &product.Name, &product.Type, &product.Quantity)
-		if err != nil {
-			models.Logger.Error("Error scanning product row", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get product"})
-			return
-		}
-		found = true // Product found, set the flag to true
-		break        // Assuming that there will be only one row since ID is unique
+	// Check if the product exists
+	product, err := ctrl.Repo.GetProductByID(productID)
+	if err != nil {
+		models.Logger.Error("Error retrieving product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve product"})
+		return
 	}
 
-	if !found {
+	if product == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
-	ctrl.DB.Model(&product).Preload("Users").Find(&product)
 
 	c.JSON(http.StatusOK, product)
 }
