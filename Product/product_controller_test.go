@@ -2,7 +2,6 @@ package product_test
 
 import (
 	product "awesomeProject1/Product"
-	"awesomeProject1/controllers"
 	"awesomeProject1/models"
 	"encoding/json"
 	"errors"
@@ -18,14 +17,14 @@ func TestCreateProductHandler(t *testing.T) {
 	models.InitLogger()
 
 	t.Run("ExistingID", func(t *testing.T) {
-		mockRepo := &controllers.MockProductRepository{
+		mockRepo := &product.MockProductRepository{
 			GetProductByIDFn: func(productID uint) (*product.Product, error) {
 				// Mock implementation to simulate an existing product with the same ID
 				return &product.Product{}, nil
 			},
 		}
 
-		ctrl := controllers.NewProductController(mockRepo)
+		ctrl := product.NewProductController(mockRepo)
 
 		r := gin.Default()
 		r.POST("/products", ctrl.CreateProductHandler)
@@ -45,8 +44,8 @@ func TestDeleteProductHandler(t *testing.T) {
 	models.InitLogger()
 
 	t.Run("InvalidID", func(t *testing.T) {
-		mockRepo := &controllers.MockProductRepository{}
-		ctrl := controllers.NewProductController(mockRepo)
+		mockRepo := &product.MockProductRepository{}
+		ctrl := product.NewProductController(mockRepo)
 
 		r := gin.Default()
 		r.DELETE("/products/:id", ctrl.DeleteProductHandler)
@@ -63,7 +62,7 @@ func TestDeleteProductHandler(t *testing.T) {
 
 func TestUpdateProductHandler(t *testing.T) {
 	models.InitLogger()
-	mockRepo := &controllers.MockProductRepository{
+	mockRepo := &product.MockProductRepository{
 		GetProductByIDFn: func(productID uint) (*product.Product, error) {
 			if productID == 1 {
 				return &product.Product{ID: 1}, nil
@@ -78,7 +77,7 @@ func TestUpdateProductHandler(t *testing.T) {
 		},
 	}
 
-	ctrl := controllers.NewProductController(mockRepo)
+	ctrl := product.NewProductController(mockRepo)
 
 	r := gin.Default()
 	r.PUT("/products/:id", ctrl.UpdateProductHandler)
@@ -103,7 +102,7 @@ func TestUpdateProductHandler(t *testing.T) {
 
 func TestGetAllProductsHandler(t *testing.T) {
 	models.InitLogger()
-	mockRepo := &controllers.MockProductRepository{
+	mockRepo := &product.MockProductRepository{
 		GetAllProductsFn: func() ([]product.Product, error) {
 			products := []product.Product{
 				{ID: 1, Name: "product1", Type: "type1", Quantity: 5},
@@ -113,7 +112,7 @@ func TestGetAllProductsHandler(t *testing.T) {
 		},
 	}
 
-	ctrl := controllers.NewProductController(mockRepo)
+	ctrl := product.NewProductController(mockRepo)
 
 	r := gin.Default()
 	r.GET("/products", ctrl.GetAllProductsHandler)
@@ -135,7 +134,7 @@ func TestGetAllProductsHandler(t *testing.T) {
 
 func TestGetSpecificProductHandler(t *testing.T) {
 	models.InitLogger()
-	mockRepo := &controllers.MockProductRepository{
+	mockRepo := &product.MockProductRepository{
 		GetProductByIDFn: func(productID uint) (*product.Product, error) {
 			if productID == 1 {
 				return &product.Product{ID: 1, Name: "product1", Type: "type1", Quantity: 5}, nil
@@ -146,7 +145,7 @@ func TestGetSpecificProductHandler(t *testing.T) {
 		},
 	}
 
-	ctrl := controllers.NewProductController(mockRepo)
+	ctrl := product.NewProductController(mockRepo)
 
 	r := gin.Default()
 	r.GET("/products/:id", ctrl.GetSpecificProductHandler)

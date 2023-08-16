@@ -1,11 +1,12 @@
 package routers
 
 import (
-	"awesomeProject1/controllers"
+	"awesomeProject1/Product"
+	"awesomeProject1/User"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, userController *controllers.UserController, productController *controllers.ProductController, userProductController *controllers.UserProductController) {
+func SetupRoutes(r *gin.Engine, userController *user.UserController, productController *product.ProductController) {
 	users := r.Group("/users")
 	{
 		users.POST("/", userController.CreateUserHandler)
@@ -24,11 +25,5 @@ func SetupRoutes(r *gin.Engine, userController *controllers.UserController, prod
 		products.GET("/", productController.GetAllProductsHandler)
 		products.PUT("/:id", productController.UpdateProductHandler)
 		products.DELETE("/:id", productController.DeleteProductHandler)
-	}
-
-	userproducts := r.Group("/userProducts")
-	{
-		userproducts.POST("/allocate", userProductController.AllocateProductToUser)
-		userproducts.POST("/deallocate", userProductController.DeallocateProductFromUser)
 	}
 }

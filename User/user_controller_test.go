@@ -2,7 +2,6 @@ package user_test
 
 import (
 	"awesomeProject1/User"
-	"awesomeProject1/controllers"
 	"awesomeProject1/models"
 	"encoding/json"
 	"errors"
@@ -18,7 +17,7 @@ func TestCreateUserHandler(t *testing.T) {
 	models.InitLogger()
 
 	t.Run("ExistingID", func(t *testing.T) {
-		mockRepo := &controllers.MockUserRepository{
+		mockRepo := &user.MockUserRepository{
 			GetUserByIDFn: func(userID uint) (*user.User, error) {
 				// Mock implementation to simulate an existing user with the same ID
 				return &user.User{}, nil
@@ -39,7 +38,7 @@ func TestCreateUserHandler(t *testing.T) {
 	})
 
 	t.Run("InvalidJSON", func(t *testing.T) {
-		mockRepo := &controllers.MockUserRepository{}
+		mockRepo := &user.MockUserRepository{}
 
 		ctrl := user.NewUserController(mockRepo)
 
@@ -54,7 +53,7 @@ func TestCreateUserHandler(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := &controllers.MockUserRepository{
+		mockRepo := &user.MockUserRepository{
 			CreateUserFn: func(user *user.User) error {
 				// Mock implementation for successful user creation
 				return nil
@@ -82,7 +81,7 @@ func TestDeleteUserHandler(t *testing.T) {
 	models.InitLogger()
 
 	t.Run("InvalidID", func(t *testing.T) {
-		mockRepo := &controllers.MockUserRepository{}
+		mockRepo := &user.MockUserRepository{}
 		ctrl := user.NewUserController(mockRepo)
 
 		r := gin.Default()
@@ -96,7 +95,7 @@ func TestDeleteUserHandler(t *testing.T) {
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		mockRepo := &controllers.MockUserRepository{
+		mockRepo := &user.MockUserRepository{
 			GetUserByIDFn: func(userID uint) (*user.User, error) {
 				// Mock implementation to simulate user not found
 				return nil, nil
@@ -116,7 +115,7 @@ func TestDeleteUserHandler(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := &controllers.MockUserRepository{
+		mockRepo := &user.MockUserRepository{
 			GetUserByIDFn: func(userID uint) (*user.User, error) {
 				// Mock implementation to simulate existing user
 				return &user.User{}, nil
@@ -142,10 +141,10 @@ func TestDeleteUserHandler(t *testing.T) {
 
 func TestUpdateUserHandler(t *testing.T) {
 	models.InitLogger()
-	mockRepo := &controllers.MockUserRepository{
+	mockRepo := &user.MockUserRepository{
 		GetUserByIDFn: func(userID uint) (*user.User, error) {
 			if userID == 1 {
-				return &models.User{ID: 1}, nil
+				return &user.User{ID: 1}, nil
 			}
 			return nil, nil
 		},
@@ -181,7 +180,7 @@ func TestUpdateUserHandler(t *testing.T) {
 }
 func TestGetAllUsersHandler(t *testing.T) {
 	models.InitLogger()
-	mockRepo := &controllers.MockUserRepository{
+	mockRepo := &user.MockUserRepository{
 		GetAllUsersFn: func() ([]user.User, error) {
 			users := []user.User{
 				{ID: 1, Username: "user1", Email: "user1@example.com", Role: "user"},
@@ -212,7 +211,7 @@ func TestGetAllUsersHandler(t *testing.T) {
 }
 func TestGetSpecificUserHandler(t *testing.T) {
 	models.InitLogger()
-	mockRepo := &controllers.MockUserRepository{
+	mockRepo := &user.MockUserRepository{
 		GetUserByIDFn: func(userID uint) (*user.User, error) {
 			if userID == 1 {
 				return &user.User{ID: 1, Username: "user1", Email: "user1@example.com", Role: "user"}, nil

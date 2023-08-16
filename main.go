@@ -1,7 +1,8 @@
 package main
 
 import (
-	"awesomeProject1/controllers"
+	"awesomeProject1/Product"
+	"awesomeProject1/User"
 	"awesomeProject1/models"
 	"awesomeProject1/routers"
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ func main() {
 	}
 
 	//Create table automatically
-	db.AutoMigrate(&models.User{}, &models.Product{})
+	db.AutoMigrate(&user.User{}, &product.Product{})
 
 	if err != nil {
 		panic("There is an error when creating table")
@@ -30,22 +31,13 @@ func main() {
 	//Create Logger defined in logger.go
 	models.InitLogger()
 	models.CloseLogger()
-	userRepo := &controllers.SQLUserRepository{DB: db}
-	userController := controllers.NewUserController(userRepo)
+	userRepo := &user.SQLUserRepository{DB: db}
+	userController := user.NewUserController(userRepo)
 
-	productRepo := &controllers.SQLProductRepository{DB: db}
-	productController := controllers.NewProductController(productRepo)
+	productRepo := &product.SQLProductRepository{DB: db}
+	productController := product.NewProductController(productRepo)
 
-	userProductRepo := &controllers.SQLUserProductRepository{
-		DB:          db,
-		UserRepo:    userRepo,
-		ProductRepo: productRepo,
-	}
-
-	// Create an instance of user-product controller using the repository
-	userProductController := controllers.NewUserProductController(userRepo, productRepo, userProductRepo)
-
-	routers.SetupRoutes(router, userController, productController, userProductController)
+	routers.SetupRoutes(router, userController, productController)
 	// Run the app
 	models.Logger.Info("Application started succesfully")
 	router.Run(":8080")
