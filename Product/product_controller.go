@@ -8,15 +8,15 @@ import (
 	"strconv"
 )
 
-type ProductController struct {
+type Controller struct {
 	Repo ProductRepository
 }
 
-func NewProductController(repo ProductRepository) *ProductController {
-	return &ProductController{Repo: repo}
+func NewProductController(repo ProductRepository) *Controller {
+	return &Controller{Repo: repo}
 }
 
-func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
+func (ctrl *Controller) CreateProductHandler(c *gin.Context) {
 	var product Product
 
 	if err := c.ShouldBindJSON(&product); err != nil {
@@ -41,7 +41,7 @@ func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, product)
 }
 
-func (ctrl *ProductController) DeleteProductHandler(c *gin.Context) {
+func (ctrl *Controller) DeleteProductHandler(c *gin.Context) {
 	productIDStr := c.Param("id")
 	productID32, err := strconv.ParseUint(productIDStr, 10, 64)
 	productID := uint(productID32)
@@ -74,7 +74,7 @@ func (ctrl *ProductController) DeleteProductHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
 }
 
-func (ctrl *ProductController) UpdateProductHandler(c *gin.Context) {
+func (ctrl *Controller) UpdateProductHandler(c *gin.Context) {
 	var updatedProduct Product
 
 	// Check if the product exists
@@ -118,7 +118,7 @@ func (ctrl *ProductController) UpdateProductHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, existingProduct)
 }
 
-func (ctrl *ProductController) GetAllProductsHandler(c *gin.Context) {
+func (ctrl *Controller) GetAllProductsHandler(c *gin.Context) {
 	var products []Product
 
 	// Fetch all products from the repository
@@ -134,7 +134,7 @@ func (ctrl *ProductController) GetAllProductsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, products)
 }
 
-func (ctrl *ProductController) GetSpecificProductHandler(c *gin.Context) {
+func (ctrl *Controller) GetSpecificProductHandler(c *gin.Context) {
 	productIDStr := c.Param("id")
 	productID32, err := strconv.ParseUint(productIDStr, 10, 64)
 	productID := uint(productID32)

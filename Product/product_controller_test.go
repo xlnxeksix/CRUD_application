@@ -1,7 +1,7 @@
 package product_test
 
 import (
-	product "awesomeProject1/Product"
+	"awesomeProject1/Product"
 	"awesomeProject1/models"
 	"encoding/json"
 	"errors"

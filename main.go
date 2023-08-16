@@ -39,7 +39,7 @@ func main() {
 
 	routers.SetupRoutes(router, userController, productController)
 	// Run the app
-	models.Logger.Info("Application started succesfully")
+	models.Logger.Info("Application started successfully")
 	router.Run(":8080")
 
 }

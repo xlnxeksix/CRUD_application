@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, userController *user.UserController, productController *product.ProductController) {
+func SetupRoutes(r *gin.Engine, userController *user.Controller, productController *product.Controller) {
 	users := r.Group("/users")
 	{
 		users.POST("/", userController.CreateUserHandler)

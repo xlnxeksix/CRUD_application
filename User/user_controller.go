@@ -8,16 +8,16 @@ import (
 	"strconv"
 )
 
-type UserController struct {
+type Controller struct {
 	Repo UserRepository
 }
 
-func NewUserController(repo UserRepository) *UserController {
-	return &UserController{Repo: repo}
+func NewUserController(repo UserRepository) *Controller {
+	return &Controller{Repo: repo}
 }
 
 // CreateUserHandler handles creating a new user
-func (ctrl *UserController) CreateUserHandler(c *gin.Context) {
+func (ctrl *Controller) CreateUserHandler(c *gin.Context) {
 	var user User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -41,7 +41,7 @@ func (ctrl *UserController) CreateUserHandler(c *gin.Context) {
 }
 
 // DeleteUserHandler handles deleting a user
-func (ctrl *UserController) DeleteUserHandler(c *gin.Context) {
+func (ctrl *Controller) DeleteUserHandler(c *gin.Context) {
 	userIDStr := c.Param("id")
 	userID32, err := strconv.ParseUint(userIDStr, 10, 64)
 	userID := uint(userID32)
@@ -73,7 +73,7 @@ func (ctrl *UserController) DeleteUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
+func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
 	var updatedUser User
 
 	// Check if the user exists
@@ -117,7 +117,7 @@ func (ctrl *UserController) UpdateUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, existingUser)
 }
 
-func (ctrl *UserController) GetAllUsersHandler(c *gin.Context) {
+func (ctrl *Controller) GetAllUsersHandler(c *gin.Context) {
 	var users []User
 
 	// Fetch all users from the repository
@@ -135,7 +135,7 @@ func (ctrl *UserController) GetAllUsersHandler(c *gin.Context) {
 
 // GetSpecificUserHandler handles getting a specific user
 
-func (ctrl *UserController) GetSpecificUserHandler(c *gin.Context) {
+func (ctrl *Controller) GetSpecificUserHandler(c *gin.Context) {
 
 	userIDStr := c.Param("id")
 	userID32, err := strconv.ParseUint(userIDStr, 10, 64)
