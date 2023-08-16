@@ -1,4 +1,4 @@
-package controllers
+package product
 
 import (
 	"awesomeProject1/models"
@@ -17,7 +17,7 @@ func NewProductController(repo ProductRepository) *ProductController {
 }
 
 func (ctrl *ProductController) CreateProductHandler(c *gin.Context) {
-	var product models.Product
+	var product Product
 
 	if err := c.ShouldBindJSON(&product); err != nil {
 		models.Logger.Error("Error binding JSON", zap.Error(err))
@@ -75,7 +75,7 @@ func (ctrl *ProductController) DeleteProductHandler(c *gin.Context) {
 }
 
 func (ctrl *ProductController) UpdateProductHandler(c *gin.Context) {
-	var updatedProduct models.Product
+	var updatedProduct Product
 
 	// Check if the product exists
 	productIDStr := c.Param("id")
@@ -119,7 +119,7 @@ func (ctrl *ProductController) UpdateProductHandler(c *gin.Context) {
 }
 
 func (ctrl *ProductController) GetAllProductsHandler(c *gin.Context) {
-	var products []models.Product
+	var products []Product
 
 	// Fetch all products from the repository
 	allProducts, err := ctrl.Repo.GetAllProducts()
