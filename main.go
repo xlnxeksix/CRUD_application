@@ -4,7 +4,6 @@ import (
 	"awesomeProject1/Product"
 	"awesomeProject1/User"
 	"awesomeProject1/models"
-	"awesomeProject1/routers"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -37,7 +36,8 @@ func main() {
 	productRepo := &product.SQLProductRepository{DB: db}
 	productController := product.NewProductController(productRepo)
 
-	routers.SetupRoutes(router, userController, productController)
+	user.SetupUserRoutes(router, userController)
+	product.SetupProductRoutes(router, productController)
 	// Run the app
 	models.Logger.Info("Application started successfully")
 	router.Run(":8080")
