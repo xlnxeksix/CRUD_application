@@ -8,16 +8,16 @@ import (
 	"strconv"
 )
 
-type Controller struct {
+type UserHandler interface {
+	Handle(c *gin.Context)
+}
+
+type CreateUserStrategy struct {
 	Repo UserRepository
 }
 
-func NewUserController(repo UserRepository) *Controller {
-	return &Controller{Repo: repo}
-}
-
 // CreateUserHandler handles creating a new user
-func (ctrl *Controller) CreateUserHandler(c *gin.Context) {
+func (s *CreateUserStrategy) Handle(c *gin.Context) {
 	var user User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -26,11 +26,11 @@ func (ctrl *Controller) CreateUserHandler(c *gin.Context) {
 		return
 	}
 	// Check if the user exists
-	if existingUser, _ := ctrl.Repo.GetUserByID(user.ID); existingUser != nil {
+	if existingUser, _ := s.Repo.GetUserByID(user.ID); existingUser != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User with same ID exists"})
 		return
 	}
-	if err := ctrl.Repo.CreateUser(&user); err != nil {
+	if err := s.Repo.CreateUser(&user); err != nil {
 		models.Logger.Error("Error creating user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
@@ -40,8 +40,12 @@ func (ctrl *Controller) CreateUserHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
+type DeleteUserStrategy struct {
+	Repo UserRepository
+}
+
 // DeleteUserHandler handles deleting a user
-func (ctrl *Controller) DeleteUserHandler(c *gin.Context) {
+func (s *DeleteUserStrategy) Handle(c *gin.Context) {
 	userIDStr := c.Param("id")
 	userID32, err := strconv.ParseUint(userIDStr, 10, 64)
 	userID := uint(userID32)
@@ -50,7 +54,7 @@ func (ctrl *Controller) DeleteUserHandler(c *gin.Context) {
 		return
 	}
 	// Check if the user exists
-	user, err := ctrl.Repo.GetUserByID(userID)
+	user, err := s.Repo.GetUserByID(userID)
 	if err != nil {
 		models.Logger.Error("Error retrieving user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
@@ -63,7 +67,7 @@ func (ctrl *Controller) DeleteUserHandler(c *gin.Context) {
 	}
 
 	// Delete the user
-	if err := ctrl.Repo.DeleteUser(userID); err != nil {
+	if err := s.Repo.DeleteUser(userID); err != nil {
 		models.Logger.Error("Error deleting user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
@@ -73,7 +77,11 @@ func (ctrl *Controller) DeleteUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
+type UpdateUserStrategy struct {
+	Repo UserRepository
+}
+
+func (s *UpdateUserStrategy) Handle(c *gin.Context) {
 	var updatedUser User
 
 	// Check if the user exists
@@ -85,7 +93,7 @@ func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
 	}
 
 	// Fetch the existing user from the repository
-	existingUser, err := ctrl.Repo.GetUserByID(uint(userID))
+	existingUser, err := s.Repo.GetUserByID(uint(userID))
 	if err != nil {
 		models.Logger.Error("Error finding user", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -105,7 +113,7 @@ func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
 	existingUser.Role = updatedUser.Role
 
 	// Update the user in the repository
-	err = ctrl.Repo.UpdateUser(existingUser, uint(userID))
+	err = s.Repo.UpdateUser(existingUser, uint(userID))
 	if err != nil {
 		models.Logger.Error("Error updating user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
@@ -116,11 +124,15 @@ func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, existingUser)
 }
 
-func (ctrl *Controller) GetAllUsersHandler(c *gin.Context) {
+type GetAllUserStrategy struct {
+	Repo UserRepository
+}
+
+func (s *GetAllUserStrategy) Handle(c *gin.Context) {
 	var users []User
 
 	// Fetch all users from the repository
-	allUsers, err := ctrl.Repo.GetAllUsers()
+	allUsers, err := s.Repo.GetAllUsers()
 	if err != nil {
 		models.Logger.Error("Error getting all users", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get users"})
@@ -133,8 +145,11 @@ func (ctrl *Controller) GetAllUsersHandler(c *gin.Context) {
 }
 
 // GetSpecificUserHandler handles getting a specific user
+type GetSpesificUserStrategy struct {
+	Repo UserRepository
+}
 
-func (ctrl *Controller) GetSpecificUserHandler(c *gin.Context) {
+func (s *GetSpesificUserStrategy) Handle(c *gin.Context) {
 
 	userIDStr := c.Param("id")
 	userID32, err := strconv.ParseUint(userIDStr, 10, 64)
@@ -144,7 +159,7 @@ func (ctrl *Controller) GetSpecificUserHandler(c *gin.Context) {
 		return
 	}
 	// Check if the user exists
-	user, err := ctrl.Repo.GetUserByID(userID)
+	user, err := s.Repo.GetUserByID(userID)
 	if err != nil {
 		models.Logger.Error("Error retrieving user", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})

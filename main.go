@@ -31,7 +31,7 @@ func main() {
 	models.InitLogger()
 	models.CloseLogger()
 	userRepo := &user.SQLUserRepository{DB: db}
-	userController := user.NewUserController(userRepo)
+	userController := user.SetupUserController(userRepo)
 
 	productRepo := &product.SQLProductRepository{DB: db}
 	productController := product.NewProductController(productRepo)
