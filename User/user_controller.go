@@ -65,7 +65,7 @@ func (ctrl *Controller) DeleteUserHandler(c *gin.Context) {
 	// Delete the user
 	if err := ctrl.Repo.DeleteUser(userID); err != nil {
 		models.Logger.Error("Error deleting user", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
 	}
 
@@ -100,7 +100,6 @@ func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
 	}
 
 	// Update only the necessary fields
-	existingUser.ID = updatedUser.ID
 	existingUser.Username = updatedUser.Username
 	existingUser.Email = updatedUser.Email
 	existingUser.Role = updatedUser.Role

@@ -101,7 +101,6 @@ func (ctrl *Controller) UpdateProductHandler(c *gin.Context) {
 	}
 
 	// Update only the necessary fields
-	existingProduct.ID = updatedProduct.ID
 	existingProduct.Name = updatedProduct.Name
 	existingProduct.Type = updatedProduct.Type
 	existingProduct.Quantity = updatedProduct.Quantity

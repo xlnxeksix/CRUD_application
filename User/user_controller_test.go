@@ -30,7 +30,7 @@ func TestCreateUserHandler(t *testing.T) {
 		r.POST("/users", ctrl.CreateUserHandler)
 
 		// Create a mock request with a user that has an existing ID
-		userJSON := `{"id": 123, "username": "testuser", "email": "test@example.com", "role": "user"}`
+		userJSON := `{"username": "testuser", "email": "test@example.com", "role": "user"}`
 		w := performRequest(r, "POST", "/users", userJSON)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -70,7 +70,7 @@ func TestCreateUserHandler(t *testing.T) {
 		r.POST("/users", ctrl.CreateUserHandler)
 
 		// Create a mock request with a valid user JSON
-		userJSON := `{"id": 123, "username": "testuser", "email": "test@example.com", "role": "user"}`
+		userJSON := `{"username": "testuser", "email": "test@example.com", "role": "user"}`
 		w := performRequest(r, "POST", "/users", userJSON)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
@@ -108,7 +108,7 @@ func TestDeleteUserHandler(t *testing.T) {
 		r.DELETE("/users/:id", ctrl.DeleteUserHandler)
 
 		// Create a mock request with a user ID that doesn't exist
-		w := performRequest(r, "DELETE", "/users/123", "")
+		w := performRequest(r, "DELETE", "/user/123", "")
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		assert.Contains(t, w.Body.String(), "user not found")
@@ -144,7 +144,7 @@ func TestUpdateUserHandler(t *testing.T) {
 	mockRepo := &user.MockUserRepository{
 		GetUserByIDFn: func(userID uint) (*user.User, error) {
 			if userID == 1 {
-				return &user.User{ID: 1}, nil
+				return &user.User{Username: "test_user_updated", Email: "updated@gmail.com", Role: "test_user"}, nil
 			}
 			return nil, nil
 		},
@@ -174,7 +174,7 @@ func TestUpdateUserHandler(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	// Test case 4: Successful update
-	validJSON := `{"id": 1, "username": "new_username", "email": "new_email@example.com", "role": "user"}`
+	validJSON := `{"username": "new_username", "email": "new_email@example.com", "role": "user"}`
 	w = performRequest(r, "PUT", "/users/1", validJSON)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
@@ -183,8 +183,8 @@ func TestGetAllUsersHandler(t *testing.T) {
 	mockRepo := &user.MockUserRepository{
 		GetAllUsersFn: func() ([]user.User, error) {
 			users := []user.User{
-				{ID: 1, Username: "user1", Email: "user1@example.com", Role: "user"},
-				{ID: 2, Username: "user2", Email: "user2@example.com", Role: "admin"},
+				{Username: "user1", Email: "user1@example.com", Role: "user"},
+				{Username: "user2", Email: "user2@example.com", Role: "admin"},
 			}
 			return users, nil
 		},
@@ -203,8 +203,8 @@ func TestGetAllUsersHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	expectedUsers := []user.User{
-		{ID: 1, Username: "user1", Email: "user1@example.com", Role: "user"},
-		{ID: 2, Username: "user2", Email: "user2@example.com", Role: "admin"},
+		{Username: "user1", Email: "user1@example.com", Role: "user"},
+		{Username: "user2", Email: "user2@example.com", Role: "admin"},
 	}
 
 	assert.Equal(t, expectedUsers, responseUsers)
@@ -214,9 +214,9 @@ func TestGetSpecificUserHandler(t *testing.T) {
 	mockRepo := &user.MockUserRepository{
 		GetUserByIDFn: func(userID uint) (*user.User, error) {
 			if userID == 1 {
-				return &user.User{ID: 1, Username: "user1", Email: "user1@example.com", Role: "user"}, nil
+				return &user.User{Username: "user1", Email: "user1@example.com", Role: "user"}, nil
 			} else if userID == 2 {
-				return &user.User{ID: 2, Username: "user2", Email: "user2@example.com", Role: "admin"}, nil
+				return &user.User{Username: "user2", Email: "user2@example.com", Role: "admin"}, nil
 			}
 			return nil, nil // Simulate user not found
 		},
@@ -235,7 +235,7 @@ func TestGetSpecificUserHandler(t *testing.T) {
 	err := json.Unmarshal(w1.Body.Bytes(), &user1)
 	assert.NoError(t, err)
 
-	expectedUser1 := user.User{ID: 1, Username: "user1", Email: "user1@example.com", Role: "user"}
+	expectedUser1 := user.User{Username: "user1", Email: "user1@example.com", Role: "user"}
 	assert.Equal(t, expectedUser1, user1)
 
 	// Test case: User with ID 2 exists
@@ -246,7 +246,7 @@ func TestGetSpecificUserHandler(t *testing.T) {
 	err = json.Unmarshal(w2.Body.Bytes(), &user2)
 	assert.NoError(t, err)
 
-	expectedUser2 := user.User{ID: 2, Username: "user2", Email: "user2@example.com", Role: "admin"}
+	expectedUser2 := user.User{Username: "user2", Email: "user2@example.com", Role: "admin"}
 	assert.Equal(t, expectedUser2, user2)
 
 	// Test case: User with non-existing ID

@@ -1,1 +1,0 @@
-{"level":"info","timestamp":"2023-08-16T15:48:32.273+0300","caller":"CRUD APP/main.go:42","msg":"Application started successfully"}

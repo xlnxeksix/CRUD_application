@@ -20,8 +20,8 @@ func NewSQLUserRepository(db *gorm.DB) UserRepository {
 	return &SQLUserRepository{DB: db}
 }
 func (repo *SQLUserRepository) CreateUser(user *User) error {
-	insertQuery := "INSERT INTO users (id, username, email, role) VALUES (?, ?, ?, ?)"
-	if err := repo.DB.Exec(insertQuery, user.ID, user.Username, user.Email, user.Role).Error; err != nil {
+	insertQuery := "INSERT INTO users (username, email, role) VALUES (?, ?, ?)"
+	if err := repo.DB.Exec(insertQuery, user.Username, user.Email, user.Role).Error; err != nil {
 		return err
 	}
 	return nil
@@ -43,8 +43,8 @@ func (repo *SQLUserRepository) DeleteUser(userID uint) error {
 }
 
 func (repo *SQLUserRepository) UpdateUser(user *User, existingUID uint) error {
-	updateQuery := "UPDATE users SET id = ?, username = ?, email = ?, role = ? WHERE id = ?"
-	if err := repo.DB.Exec(updateQuery, user.ID, user.Username, user.Email, user.Role, existingUID).Error; err != nil {
+	updateQuery := "UPDATE users SET username = ?, email = ?, role = ? WHERE id = ?"
+	if err := repo.DB.Exec(updateQuery, user.Username, user.Email, user.Role, existingUID).Error; err != nil {
 		return err
 	}
 	return nil

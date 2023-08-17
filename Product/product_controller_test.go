@@ -57,7 +57,49 @@ func TestDeleteProductHandler(t *testing.T) {
 		assert.Contains(t, w.Body.String(), "Invalid ID")
 	})
 
-	// Add more test cases for product not found and successful deletion...
+	t.Run("ProductNotFound", func(t *testing.T) {
+		mockRepo := &product.MockProductRepository{
+			GetProductByIDFn: func(productID uint) (*product.Product, error) {
+				// Mock implementation to simulate product not found
+				return nil, nil
+			},
+		}
+
+		ctrl := product.NewProductController(mockRepo)
+
+		r := gin.Default()
+		r.DELETE("/product/:id", ctrl.DeleteProductHandler)
+
+		// Create a mock request with a user ID that doesn't exist
+		w := performRequest(r, "DELETE", "/product/123", "")
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Contains(t, w.Body.String(), "product not found")
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := &product.MockProductRepository{
+			GetProductByIDFn: func(userID uint) (*product.Product, error) {
+				// Mock implementation to simulate existing user
+				return &product.Product{}, nil
+			},
+			DeleteProductFn: func(productID uint) error {
+				// Mock implementation for successful user deletion
+				return nil
+			},
+		}
+
+		ctrl := product.NewProductController(mockRepo)
+
+		r := gin.Default()
+		r.DELETE("/users/:id", ctrl.DeleteProductHandler)
+
+		// Create a mock request with an existing user ID
+		w := performRequest(r, "DELETE", "/products/123", "")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "product deleted successfully")
+	})
 }
 
 func TestUpdateProductHandler(t *testing.T) {
@@ -65,7 +107,7 @@ func TestUpdateProductHandler(t *testing.T) {
 	mockRepo := &product.MockProductRepository{
 		GetProductByIDFn: func(productID uint) (*product.Product, error) {
 			if productID == 1 {
-				return &product.Product{ID: 1}, nil
+				return &product.Product{Name: "ID1", Type: "Office", Quantity: 4}, nil
 			}
 			return nil, nil
 		},
@@ -73,7 +115,7 @@ func TestUpdateProductHandler(t *testing.T) {
 			if existingPID == 1 {
 				return nil
 			}
-			return errors.New("product not found")
+			return errors.New("Product not found")
 		},
 	}
 
@@ -95,7 +137,7 @@ func TestUpdateProductHandler(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	// Test case 4: Successful update
-	validJSON := `{"id": 1, "name": "new_product", "type": "updated", "quantity": 10}`
+	validJSON := `{"name": "new_product", "type": "updated", "quantity": 10}`
 	w = performRequest(r, "PUT", "/products/1", validJSON)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
@@ -105,8 +147,8 @@ func TestGetAllProductsHandler(t *testing.T) {
 	mockRepo := &product.MockProductRepository{
 		GetAllProductsFn: func() ([]product.Product, error) {
 			products := []product.Product{
-				{ID: 1, Name: "product1", Type: "type1", Quantity: 5},
-				{ID: 2, Name: "product2", Type: "type2", Quantity: 10},
+				{Name: "product1", Type: "type1", Quantity: 5},
+				{Name: "product2", Type: "type2", Quantity: 10},
 			}
 			return products, nil
 		},
@@ -125,8 +167,8 @@ func TestGetAllProductsHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	expectedProducts := []product.Product{
-		{ID: 1, Name: "product1", Type: "type1", Quantity: 5},
-		{ID: 2, Name: "product2", Type: "type2", Quantity: 10},
+		{Name: "product1", Type: "type1", Quantity: 5},
+		{Name: "product2", Type: "type2", Quantity: 10},
 	}
 
 	assert.Equal(t, expectedProducts, responseProducts)
@@ -137,9 +179,9 @@ func TestGetSpecificProductHandler(t *testing.T) {
 	mockRepo := &product.MockProductRepository{
 		GetProductByIDFn: func(productID uint) (*product.Product, error) {
 			if productID == 1 {
-				return &product.Product{ID: 1, Name: "product1", Type: "type1", Quantity: 5}, nil
+				return &product.Product{Name: "product1", Type: "type1", Quantity: 5}, nil
 			} else if productID == 2 {
-				return &product.Product{ID: 2, Name: "product2", Type: "type2", Quantity: 10}, nil
+				return &product.Product{Name: "product2", Type: "type2", Quantity: 10}, nil
 			}
 			return nil, nil // Simulate product not found
 		},
@@ -158,7 +200,7 @@ func TestGetSpecificProductHandler(t *testing.T) {
 	err := json.Unmarshal(w1.Body.Bytes(), &product1)
 	assert.NoError(t, err)
 
-	expectedProduct1 := product.Product{ID: 1, Name: "product1", Type: "type1", Quantity: 5}
+	expectedProduct1 := product.Product{Name: "product1", Type: "type1", Quantity: 5}
 	assert.Equal(t, expectedProduct1, product1)
 
 	// Test case: Product with ID 2 exists
@@ -169,7 +211,7 @@ func TestGetSpecificProductHandler(t *testing.T) {
 	err = json.Unmarshal(w2.Body.Bytes(), &product2)
 	assert.NoError(t, err)
 
-	expectedProduct2 := product.Product{ID: 2, Name: "product2", Type: "type2", Quantity: 10}
+	expectedProduct2 := product.Product{Name: "product2", Type: "type2", Quantity: 10}
 	assert.Equal(t, expectedProduct2, product2)
 
 	// Test case: Product with non-existing ID
@@ -180,7 +222,7 @@ func TestGetSpecificProductHandler(t *testing.T) {
 	err = json.Unmarshal(w3.Body.Bytes(), &response3)
 	assert.NoError(t, err)
 
-	expectedResponse3 := map[string]string{"error": "product not found"}
+	expectedResponse3 := map[string]string{"error": "Product not found"}
 	assert.Equal(t, expectedResponse3, response3)
 
 	// Test case: Invalid ID

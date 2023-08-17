@@ -21,8 +21,8 @@ func NewSQLProductRepository(db *gorm.DB) ProductRepository {
 }
 
 func (repo *SQLProductRepository) CreateProduct(product *Product) error {
-	insertQuery := "INSERT INTO products (id, name, type, quantity) VALUES (?, ?, ?, ?)"
-	if err := repo.DB.Exec(insertQuery, product.ID, product.Name, product.Type, product.Quantity).Error; err != nil {
+	insertQuery := "INSERT INTO products (name, type, quantity) VALUES (?, ?, ?)"
+	if err := repo.DB.Exec(insertQuery, product.Name, product.Type, product.Quantity).Error; err != nil {
 		return err
 	}
 	return nil
@@ -45,8 +45,8 @@ func (repo *SQLProductRepository) DeleteProduct(productID uint) error {
 }
 
 func (repo *SQLProductRepository) UpdateProduct(product *Product, existingPID uint) error {
-	updateQuery := "UPDATE products SET id = ?, name = ?, type = ?, quantity = ? WHERE id = ?"
-	if err := repo.DB.Exec(updateQuery, product.ID, product.Name, product.Type, product.Quantity, existingPID).Error; err != nil {
+	updateQuery := "UPDATE products SET name = ?, type = ?, quantity = ? WHERE id = ?"
+	if err := repo.DB.Exec(updateQuery, product.Name, product.Type, product.Quantity, existingPID).Error; err != nil {
 		return err
 	}
 	return nil
