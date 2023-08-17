@@ -24,7 +24,7 @@ func TestCreateUserHandler(t *testing.T) {
 			},
 		}
 
-		ctrl := user.NewUserController(mockRepo)
+		ctrl := user.SetupUserController(mockRepo)
 
 		r := gin.Default()
 		r.POST("/users", ctrl.CreateUserHandler)
@@ -40,7 +40,7 @@ func TestCreateUserHandler(t *testing.T) {
 	t.Run("InvalidJSON", func(t *testing.T) {
 		mockRepo := &user.MockUserRepository{}
 
-		ctrl := user.NewUserController(mockRepo)
+		ctrl := user.SetupUserController(mockRepo)
 
 		r := gin.Default()
 		r.POST("/users", ctrl.CreateUserHandler)
@@ -64,7 +64,7 @@ func TestCreateUserHandler(t *testing.T) {
 			},
 		}
 
-		ctrl := user.NewUserController(mockRepo)
+		ctrl := user.SetupUserController(mockRepo)
 
 		r := gin.Default()
 		r.POST("/users", ctrl.CreateUserHandler)
@@ -82,7 +82,7 @@ func TestDeleteUserHandler(t *testing.T) {
 
 	t.Run("InvalidID", func(t *testing.T) {
 		mockRepo := &user.MockUserRepository{}
-		ctrl := user.NewUserController(mockRepo)
+		ctrl := user.SetupUserController(mockRepo)
 
 		r := gin.Default()
 		r.DELETE("/users/:id", ctrl.DeleteUserHandler)
@@ -102,7 +102,7 @@ func TestDeleteUserHandler(t *testing.T) {
 			},
 		}
 
-		ctrl := user.NewUserController(mockRepo)
+		ctrl := user.SetupUserController(mockRepo)
 
 		r := gin.Default()
 		r.DELETE("/users/:id", ctrl.DeleteUserHandler)
@@ -126,7 +126,7 @@ func TestDeleteUserHandler(t *testing.T) {
 			},
 		}
 
-		ctrl := user.NewUserController(mockRepo)
+		ctrl := user.SetupUserController(mockRepo)
 
 		r := gin.Default()
 		r.DELETE("/users/:id", ctrl.DeleteUserHandler)
@@ -156,7 +156,7 @@ func TestUpdateUserHandler(t *testing.T) {
 		},
 	}
 
-	ctrl := user.NewUserController(mockRepo)
+	ctrl := user.SetupUserController(mockRepo)
 
 	r := gin.Default()
 	r.PUT("/users/:id", ctrl.UpdateUserHandler)
@@ -190,10 +190,10 @@ func TestGetAllUsersHandler(t *testing.T) {
 		},
 	}
 
-	ctrl := user.NewUserController(mockRepo)
+	ctrl := user.SetupUserController(mockRepo)
 
 	r := gin.Default()
-	r.GET("/users", ctrl.GetAllUsersHandler)
+	r.GET("/users", ctrl.GetAllUserHandler)
 
 	w := performRequest(r, "GET", "/users", "")
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -222,10 +222,10 @@ func TestGetSpecificUserHandler(t *testing.T) {
 		},
 	}
 
-	ctrl := user.NewUserController(mockRepo)
+	ctrl := user.SetupUserController(mockRepo)
 
 	r := gin.Default()
-	r.GET("/users/:id", ctrl.GetSpecificUserHandler)
+	r.GET("/users/:id", ctrl.GetOneUserHandler)
 
 	// Test case: User with ID 1 exists
 	w1 := performRequest(r, "GET", "/users/1", "")
