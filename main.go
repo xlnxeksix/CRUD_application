@@ -34,7 +34,12 @@ func main() {
 	userController := user.NewUserController(userRepo)
 
 	productRepo := &product.SQLProductRepository{DB: db}
-	productController := product.NewProductController(productRepo)
+	strategies := map[string]product.Pricing{
+		"tech":      &product.TechStrategy{},
+		"office":    &product.OfficeStrategy{},
+		"furniture": &product.FurnitureStrategy{},
+	}
+	productController := product.NewProductController(productRepo, strategies)
 
 	user.SetupUserRoutes(router, userController)
 	product.SetupProductRoutes(router, productController)

@@ -9,11 +9,15 @@ import (
 )
 
 type Controller struct {
-	Repo ProductRepository
+	Repo       ProductRepository
+	Strategies map[string]Pricing // Add the strategies map
 }
 
-func NewProductController(repo ProductRepository) *Controller {
-	return &Controller{Repo: repo}
+func NewProductController(repo ProductRepository, strategies map[string]Pricing) *Controller {
+	return &Controller{
+		Repo:       repo,
+		Strategies: strategies, // Initialize the strategies map
+	}
 }
 
 func (ctrl *Controller) CreateProductHandler(c *gin.Context) {
@@ -30,6 +34,14 @@ func (ctrl *Controller) CreateProductHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Product with same ID exists"})
 		return
 	}
+
+	// Get the appropriate strategy based on the product type
+	selectedStrategy := ctrl.Strategies[product.Type]
+
+	// Calculate the shipping price using the selected strategy
+	shippingPrice := selectedStrategy.CalculatePrice(&product)
+
+	product.ShippingPrice = &shippingPrice // Set the calculated shipping price
 
 	if err := ctrl.Repo.CreateProduct(&product); err != nil {
 		models.Logger.Error("Error creating product", zap.Error(err))
