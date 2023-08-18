@@ -1,0 +1,2 @@
+{"level":"info","timestamp":"2023-08-18T12:57:37.601+0300","caller":"CRUD APP/main.go:47","msg":"Application started successfully"}
+{"level":"info","timestamp":"2023-08-18T12:57:57.160+0300","caller":"Product/product_controller.go:52","msg":"Product created successfully"}

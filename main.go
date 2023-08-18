@@ -46,5 +46,4 @@ func main() {
 	// Run the app
 	models.Logger.Info("Application started successfully")
 	router.Run(":8080")
-
 }
