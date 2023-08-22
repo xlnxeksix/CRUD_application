@@ -1,11 +1,13 @@
 package user
 
 type MockUserRepository struct {
-	CreateUserFn  func(user *User) error
-	GetUserByIDFn func(userID uint) (*User, error)
-	DeleteUserFn  func(userID uint) error
-	UpdateUserFn  func(user *User, existingUID uint) error
-	GetAllUsersFn func() ([]User, error)
+	CreateUserFn       func(user *User) error
+	GetUserByIDFn      func(userID uint) (*User, error)
+	DeleteUserFn       func(userID uint) error
+	UpdateUserFn       func(user *User, existingUID uint) error
+	GetAllUsersFn      func() ([]User, error)
+	AuthenticateUserFn func(username, passwd string) (*User, error)
+	GetUserRoleFn      func(username string) (string, error)
 }
 
 func (m *MockUserRepository) CreateUser(user *User) error {
@@ -26,4 +28,12 @@ func (m *MockUserRepository) UpdateUser(user *User, existingUID uint) error {
 
 func (m *MockUserRepository) GetAllUsers() ([]User, error) {
 	return m.GetAllUsersFn()
+}
+
+func (m *MockUserRepository) AuthenticateUser(username, passwd string) (*User, error) {
+	return m.AuthenticateUserFn(username, passwd)
+}
+
+func (m *MockUserRepository) GetUserRole(username string) (string, error) {
+	return m.GetUserRoleFn(username)
 }

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"awesomeProject1/models"
+	"awesomeProject1/Models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
