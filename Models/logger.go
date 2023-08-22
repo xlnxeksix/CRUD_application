@@ -10,8 +10,8 @@ var Logger *zap.Logger
 func InitLogger() {
 	config := zap.NewProductionConfig()
 	// Change the log output to a file called "project_log.txt"
-	config.OutputPaths = []string{"project_log.txt"}
-	config.ErrorOutputPaths = []string{"project_log.txt"}
+	config.OutputPaths = []string{"/Logs/project_log.txt"}
+	config.ErrorOutputPaths = []string{"/Logs/project_log.txt"}
 	// Customize other logger options as needed (e.g., log level, encoding, etc.)
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder

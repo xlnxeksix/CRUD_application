@@ -1,2 +1,4 @@
 # Logs files #
-*.log
+Logs/
+#Postman collection needs an update#
+PostmanCollection/

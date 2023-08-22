@@ -1,7 +1,7 @@
 package user
 
 import (
-	"awesomeProject1/models"
+	"awesomeProject1/Models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
@@ -103,6 +103,7 @@ func (ctrl *Controller) UpdateUserHandler(c *gin.Context) {
 	existingUser.Username = updatedUser.Username
 	existingUser.Email = updatedUser.Email
 	existingUser.Role = updatedUser.Role
+	existingUser.Password = updatedUser.Password
 
 	// Update the user in the repository
 	err = ctrl.Repo.UpdateUser(existingUser, uint(userID))

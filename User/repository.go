@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"gorm.io/gorm"
 )
 
@@ -10,6 +11,8 @@ type UserRepository interface {
 	DeleteUser(userID uint) error
 	UpdateUser(user *User, existingUID uint) error
 	GetAllUsers() ([]User, error)
+	AuthenticateUser(username, passwd string) (*User, error)
+	GetUserRole(username string) (string, error)
 }
 
 type SQLUserRepository struct {
@@ -20,8 +23,8 @@ func NewSQLUserRepository(db *gorm.DB) UserRepository {
 	return &SQLUserRepository{DB: db}
 }
 func (repo *SQLUserRepository) CreateUser(user *User) error {
-	insertQuery := "INSERT INTO users (username, email, role) VALUES (?, ?, ?)"
-	if err := repo.DB.Exec(insertQuery, user.Username, user.Email, user.Role).Error; err != nil {
+	insertQuery := "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)"
+	if err := repo.DB.Exec(insertQuery, user.Username, user.Email, user.Password, user.Role).Error; err != nil {
 		return err
 	}
 	return nil
@@ -43,8 +46,8 @@ func (repo *SQLUserRepository) DeleteUser(userID uint) error {
 }
 
 func (repo *SQLUserRepository) UpdateUser(user *User, existingUID uint) error {
-	updateQuery := "UPDATE users SET username = ?, email = ?, role = ? WHERE id = ?"
-	if err := repo.DB.Exec(updateQuery, user.Username, user.Email, user.Role, existingUID).Error; err != nil {
+	updateQuery := "UPDATE users SET username = ?, email = ?, password = ?,  role = ? WHERE id = ?"
+	if err := repo.DB.Exec(updateQuery, user.Username, user.Email, user.Password, user.Role, existingUID).Error; err != nil {
 		return err
 	}
 	return nil
@@ -56,4 +59,29 @@ func (repo *SQLUserRepository) GetAllUsers() ([]User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (repo *SQLUserRepository) AuthenticateUser(username, password string) (*User, error) {
+	var user User
+	if err := repo.DB.Where("username = ? AND password = ?", username, password).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // User not found
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (repo *SQLUserRepository) GetUserRole(username string) (string, error) {
+	var user User
+
+	// Find the user by username
+	if err := repo.DB.Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil // User not found, return empty role
+		}
+		return "", err
+	}
+
+	return user.Role, nil
 }

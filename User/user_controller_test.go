@@ -1,8 +1,8 @@
 package user_test
 
 import (
+	"awesomeProject1/Models"
 	"awesomeProject1/User"
-	"awesomeProject1/models"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"

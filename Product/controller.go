@@ -1,8 +1,7 @@
 package product
 
 import (
-	product "awesomeProject1/Product/strategies"
-	"awesomeProject1/models"
+	"awesomeProject1/Models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
@@ -11,10 +10,10 @@ import (
 
 type Controller struct {
 	Repo       ProductRepository
-	Strategies map[string]product.Pricing // Add the strategies map
+	Strategies map[string]Pricing // Add the strategies map
 }
 
-func NewProductController(repo ProductRepository, strategies map[string]product.Pricing) *Controller {
+func NewProductController(repo ProductRepository, strategies map[string]Pricing) *Controller {
 	return &Controller{
 		Repo:       repo,
 		Strategies: strategies, // Initialize the strategies map
