@@ -2,6 +2,7 @@ package product
 
 import (
 	"awesomeProject1/Models"
+	"awesomeProject1/Product/Strategies"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
@@ -10,10 +11,15 @@ import (
 
 type Controller struct {
 	Repo       ProductRepository
-	Strategies map[string]Pricing // Add the strategies map
+	Strategies map[string]pricing.Pricing // Add the strategies map
 }
 
-func NewProductController(repo ProductRepository, strategies map[string]Pricing) *Controller {
+func NewProductController(repo ProductRepository) *Controller {
+	strategies := map[string]pricing.Pricing{
+		"tech":      &pricing.TechStrategy{},
+		"office":    &pricing.OfficeStrategy{},
+		"furniture": &pricing.FurnitureStrategy{},
+	}
 	return &Controller{
 		Repo:       repo,
 		Strategies: strategies, // Initialize the strategies map
@@ -39,7 +45,7 @@ func (ctrl *Controller) CreateProductHandler(c *gin.Context) {
 	selectedStrategy := ctrl.Strategies[product.Type]
 
 	// Calculate the shipping price using the selected strategy
-	shippingPrice := selectedStrategy.CalculatePrice(&product)
+	shippingPrice := selectedStrategy.CalculatePrice(product.Quantity)
 
 	product.ShippingPrice = &shippingPrice // Set the calculated shipping price
 

@@ -21,8 +21,8 @@ func NewSQLProductRepository(db *gorm.DB) ProductRepository {
 }
 
 func (repo *SQLProductRepository) CreateProduct(product *Product) error {
-	insertQuery := "INSERT INTO products (name, type, quantity) VALUES (?, ?, ?)"
-	if err := repo.DB.Exec(insertQuery, product.Name, product.Type, product.Quantity).Error; err != nil {
+	insertQuery := "INSERT INTO products (name, type, quantity, shipping_price) VALUES (?, ?, ?, ?)"
+	if err := repo.DB.Exec(insertQuery, product.Name, product.Type, product.Quantity, product.ShippingPrice).Error; err != nil {
 		return err
 	}
 	return nil

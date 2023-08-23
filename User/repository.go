@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"gorm.io/gorm"
 )
 
@@ -11,8 +10,6 @@ type UserRepository interface {
 	DeleteUser(userID uint) error
 	UpdateUser(user *User, existingUID uint) error
 	GetAllUsers() ([]User, error)
-	AuthenticateUser(username, passwd string) (*User, error)
-	GetUserRole(username string) (string, error)
 }
 
 type SQLUserRepository struct {
@@ -59,29 +56,4 @@ func (repo *SQLUserRepository) GetAllUsers() ([]User, error) {
 		return nil, err
 	}
 	return users, nil
-}
-
-func (repo *SQLUserRepository) AuthenticateUser(username, password string) (*User, error) {
-	var user User
-	if err := repo.DB.Where("username = ? AND password = ?", username, password).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // User not found
-		}
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (repo *SQLUserRepository) GetUserRole(username string) (string, error) {
-	var user User
-
-	// Find the user by username
-	if err := repo.DB.Where("username = ?", username).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil // User not found, return empty role
-		}
-		return "", err
-	}
-
-	return user.Role, nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"awesomeProject1/Authentication"
 	"awesomeProject1/Models"
 	"awesomeProject1/Product"
 	"awesomeProject1/User"
@@ -30,19 +31,18 @@ func main() {
 	//Create Logger defined in logger.go
 	models.InitLogger()
 	models.CloseLogger()
+
 	userRepo := &user.SQLUserRepository{DB: db}
 	userController := user.NewUserController(userRepo)
 
 	productRepo := &product.SQLProductRepository{DB: db}
-	strategies := map[string]product.Pricing{
-		"tech":      &product.TechStrategy{},
-		"office":    &product.OfficeStrategy{},
-		"furniture": &product.FurnitureStrategy{},
-	}
-	productController := product.NewProductController(productRepo, strategies)
+	productController := product.NewProductController(productRepo)
 
-	user.SetupUserRoutes(router, userController, userRepo)
-	product.SetupProductRoutes(router, productController)
+	authRepo := &Authentication.SQLAuthRepository{DB: db}
+	authController := Authentication.NewAuthController(authRepo)
+
+	user.SetupUserRoutes(router, authController, userController)
+	product.SetupProductRoutes(router, authController, productController)
 	// Run the app
 	models.Logger.Info("Application started successfully")
 	router.Run(":8080")

@@ -1,17 +1,23 @@
 package product
 
 import (
+	"awesomeProject1/Authentication"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupProductRoutes(r *gin.Engine, productController *Controller) {
-
-	products := r.Group("/products")
+func SetupProductRoutes(r *gin.Engine, authController *Authentication.Controller, productController *Controller) {
+	r.Use(authController.BasicAuthMiddleware())
+	adminGroup := r.Group("/products")
+	adminGroup.Use(authController.AdminAuthMiddleware)
 	{
-		products.POST("/", productController.CreateProductHandler)
-		products.GET("/:id", productController.GetSpecificProductHandler)
-		products.GET("/", productController.GetAllProductsHandler)
-		products.PUT("/:id", productController.UpdateProductHandler)
-		products.DELETE("/:id", productController.DeleteProductHandler)
+		adminGroup.POST("/", productController.CreateProductHandler)
+		adminGroup.GET("/", productController.GetAllProductsHandler)
+		adminGroup.DELETE("/:id", productController.DeleteProductHandler)
+	}
+	userGroup := r.Group("/products")
+	userGroup.Use(authController.UserAuthMiddleware)
+	{
+		userGroup.GET("/:id", productController.GetSpecificProductHandler)
+		userGroup.PUT("/:id", productController.UpdateProductHandler)
 	}
 }
