@@ -39,7 +39,6 @@ func (ctrl *Controller) GetRuleContent(c *gin.Context) {
 	// Get the appropriate insight strategy based on the SIEM type
 	selectedStrategy := ctrl.Strategies[rule.SIEM]
 
-	// Calculate the shipping price using the selected strategy
 	Insight := selectedStrategy.InsightAnalysis(rule.RuleContent)
 
 	fmt.Println(Insight)
