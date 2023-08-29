@@ -4,6 +4,7 @@ import (
 	"awesomeProject1/Authentication"
 	"awesomeProject1/Models"
 	"awesomeProject1/Product"
+	"awesomeProject1/SIEM"
 	"awesomeProject1/User"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
@@ -38,11 +39,15 @@ func main() {
 	productRepo := &product.SQLProductRepository{DB: db}
 	productController := product.NewProductController(productRepo)
 
+	SIEMRepo := &SIEM.SQLProductRepository{DB: db}
+	SIEMController := SIEM.NewSIEMController(SIEMRepo)
+
 	authRepo := &Authentication.SQLAuthRepository{DB: db}
 	authController := Authentication.NewAuthController(authRepo)
 
 	user.SetupUserRoutes(router, authController, userController)
 	product.SetupProductRoutes(router, authController, productController)
+	SIEM.SetupInsightRoutes(router, authController, SIEMController)
 	// Run the app
 	models.Logger.Info("Application started successfully")
 	router.Run(":8080")

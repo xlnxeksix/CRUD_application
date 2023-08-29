@@ -1,7 +1,9 @@
 package Authentication
 
 import (
+	models "awesomeProject1/Models"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -20,6 +22,7 @@ func (ctrl Controller) BasicAuthMiddleware() gin.HandlerFunc {
 
 		role, err := ctrl.Repo.AuthenticateUser(username, password)
 		if err != nil || role == "" {
+			models.Logger.Error("Error authenticating the user", zap.Error(err))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
 			c.Abort()
 			return
