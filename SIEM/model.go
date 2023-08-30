@@ -4,6 +4,6 @@ import "gorm.io/gorm"
 
 type rule struct {
 	gorm.Model
-	SIEM        string
-	RuleContent string
+	product string
+	content string
 }
