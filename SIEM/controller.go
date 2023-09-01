@@ -2,6 +2,7 @@ package SIEM
 
 import (
 	models "awesomeProject1/Models"
+	"awesomeProject1/SIEM/Model"
 	"awesomeProject1/SIEM/Strategies"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -28,20 +29,18 @@ func NewSIEMController(repo SIEMRepository) *Controller {
 }
 
 func (ctrl *Controller) GetRuleContent(c *gin.Context) {
-	var rule rule
+	var formRule Model.RuleForm
 
-	if err := c.ShouldBindJSON(&rule); err != nil {
+	if err := c.ShouldBindJSON(&formRule); err != nil {
 		models.Logger.Error("Error binding JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Println(formRule)
+	// Get the appropriate insight strategy based on the SIEM product type
+	selectedStrategy := ctrl.Strategies[formRule.Product]
 
-	// Get the appropriate insight strategy based on the SIEM type
-	selectedStrategy := ctrl.Strategies[rule.product]
-
-	// Calculate the shipping price using the selected strategy
-	Insight := selectedStrategy.InsightAnalysis(rule.content)
-
-	fmt.Println(Insight)
+	ARule := selectedStrategy.InsightAnalysis(formRule)
+	fmt.Println(ARule.WildCardInsight)
 
 }
