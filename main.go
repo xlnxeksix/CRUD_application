@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"net/http"
 )
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 
 	// Create gin-gonic router
 	router := gin.Default()
+	router.LoadHTMLGlob("templates/*")
 
 	//Create Logger defined in logger.go
 	models.InitLogger()
@@ -49,6 +51,10 @@ func main() {
 	user.SetupUserRoutes(router, authController, userController)
 	product.SetupProductRoutes(router, authController, productController)
 	SIEM.SetupInsightRoutes(router, authController, SIEMController)
+	// Define a route to render the SIEM rule input form
+	router.GET("/siem-form", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "siem_form.html", nil)
+	})
 	// Run the app
 	models.Logger.Info("Application started successfully")
 	router.Run(":8080")
