@@ -5,6 +5,7 @@ import (
 	"awesomeProject1/Models"
 	"awesomeProject1/Product"
 	"awesomeProject1/SIEM"
+	"awesomeProject1/SIEM/Model"
 	"awesomeProject1/User"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
@@ -20,7 +21,7 @@ func main() {
 	}
 
 	//Create table automatically
-	db.AutoMigrate(&user.User{}, &product.Product{})
+	db.AutoMigrate(&user.User{}, &product.Product{}, &Model.AnalyzedRule{})
 
 	if err != nil {
 		panic("There is an error when creating table")
@@ -39,7 +40,7 @@ func main() {
 	productRepo := &product.SQLProductRepository{DB: db}
 	productController := product.NewProductController(productRepo)
 
-	SIEMRepo := &SIEM.SQLProductRepository{DB: db}
+	SIEMRepo := &SIEM.SQLRuleRepository{DB: db}
 	SIEMController := SIEM.NewSIEMController(SIEMRepo)
 
 	authRepo := &Authentication.SQLAuthRepository{DB: db}
