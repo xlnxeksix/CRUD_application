@@ -7,9 +7,6 @@ import (
 
 type SplunkStrategy struct{}
 
-func (s *SplunkStrategy) InsightAnalysis(rule *Model.RuleForm) *Model.AnalyzedRule {
-
-	analyzedRule := splunk.SetandExecuteInsightChain(rule)
-
-	return analyzedRule
+func (s *SplunkStrategy) InsightAnalysis(rule *Model.RuleForm) []int {
+	return splunk.SetandExecuteInsightChain(rule)
 }

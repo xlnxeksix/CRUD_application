@@ -5,6 +5,6 @@ import (
 )
 
 type Insight interface {
-	Execute(rule *Model.FlattenedRule, pool *Model.InsightPool)
+	Execute(rule *Model.FlattenedRule, InsightsIDs []int)
 	SetNext(Insight)
 }

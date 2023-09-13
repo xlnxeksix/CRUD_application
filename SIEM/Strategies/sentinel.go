@@ -4,7 +4,7 @@ import "awesomeProject1/SIEM/Model"
 
 type SentinelStrategy struct{}
 
-func (s *SentinelStrategy) InsightAnalysis(rule *Model.RuleForm) *Model.AnalyzedRule {
-	var Arule *Model.AnalyzedRule
-	return Arule
+func (s *SentinelStrategy) InsightAnalysis(rule *Model.RuleForm) []int {
+	var a []int
+	return a
 }

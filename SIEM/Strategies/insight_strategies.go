@@ -5,5 +5,5 @@ import (
 )
 
 type Insight interface {
-	InsightAnalysis(ruleContent *Model.RuleForm) *Model.AnalyzedRule
+	InsightAnalysis(ruleContent *Model.RuleForm) []int
 }

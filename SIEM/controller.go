@@ -61,8 +61,12 @@ func (ctrl *Controller) GetRuleContent(c *gin.Context) {
 		// Get the appropriate insight strategy based on the SIEM product type
 		selectedStrategy := ctrl.Strategies[formRule.Product]
 
-		ARule := selectedStrategy.InsightAnalysis(&formRule)
-		ctrl.Repo.InsertRule(ARule)
+		InsightIDs := selectedStrategy.InsightAnalysis(&formRule)
+		flattenedRule := &Model.FlattenedRule{
+			RuleForm:      formRule,
+			FlattenedRule: formRule.RuleContent, // Assuming RuleContent is the flattened rule
+		}
+		ctrl.Repo.InsertInsight(flattenedRule, InsightIDs)
 		fmt.Println("Added")
 
 		// Schedule the task to run again at the same time the next day
@@ -82,8 +86,13 @@ func (ctrl *Controller) scheduleTaskAtUserTime(formRule Model.RuleForm) {
 
 		selectedStrategy := ctrl.Strategies[formRule.Product]
 
-		ARule := selectedStrategy.InsightAnalysis(&formRule)
-		ctrl.Repo.InsertRule(ARule)
+		InsightIDs := selectedStrategy.InsightAnalysis(&formRule)
+		flattenedRule := &Model.FlattenedRule{
+			RuleForm:      formRule,
+			FlattenedRule: formRule.RuleContent, // Assuming RuleContent is the flattened rule
+		}
+		ctrl.Repo.InsertInsight(flattenedRule, InsightIDs)
+		fmt.Println("Added")
 		fmt.Println("Added")
 	}
 }

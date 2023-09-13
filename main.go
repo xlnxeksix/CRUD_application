@@ -22,12 +22,12 @@ func main() {
 	}
 
 	//Create table automatically
-	db.AutoMigrate(&user.User{}, &product.Product{}, &Model.AnalyzedRule{})
+	db.AutoMigrate(&user.User{}, &product.Product{}, &Model.RuleForm{}, &Model.FlattenedRule{}, &Model.InsightType{})
 
 	if err != nil {
 		panic("There is an error when creating table")
 	}
-
+	//rule_insight.AddInsightsToDatabase(db)
 	// Create gin-gonic router
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
