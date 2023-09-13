@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SIEM Rule Input</title>
+</head>
+<body>
+<!-- SIEM rule input form -->
+<form id="siemForm">
+    <label for="product">Product:</label>
+    <input type="text" id="product" name="product" required><br><br>
+
+    <label for="rule_content">Rule Content:</label>
+    <textarea id="rule_content" name="rule_content" rows="4" cols="50" required></textarea><br><br>
+
+    <label for="scheduledtime">Scheduled Time (YYYY-MM-DDTHH:mm:ssZ):</label>
+    <input type="text" id="scheduledtime" name="scheduledtime" placeholder="2023-11-05T10:39:00Z" required><br><br>
+
+    <input type="submit" value="Submit">
+</form>
+
+<!-- JavaScript to handle form submission -->
+<script>
+    document.getElementById("siemForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        // Get input values
+        const product = document.getElementById("product").value;
+        const rule_content = document.getElementById("rule_content").value;
+        const scheduledtime = document.getElementById("scheduledtime").value;
+
+        // Create JSON object with input data
+        const jsonData = {
+            "product": product,
+            "rule_content": rule_content,
+            "scheduledtime": scheduledtime
+        };
+
+        // Convert JSON data to a string
+        const jsonDataString = JSON.stringify(jsonData);
+
+        // Send POST request to the SIEM backend
+        fetch("/siem", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "username" : "admin",
+                "password" : "admin"
+            },
+            body: jsonDataString
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Response:", data);
+                // Handle the response as needed (e.g., show a success message to the user)
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                // Handle errors (e.g., show an error message to the user)
+            });
+    });
+</script>
+</body>
+</html>

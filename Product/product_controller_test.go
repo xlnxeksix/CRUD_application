@@ -1,8 +1,8 @@
 package product_test
 
 import (
+	"awesomeProject1/Models"
 	"awesomeProject1/Product"
-	"awesomeProject1/models"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
